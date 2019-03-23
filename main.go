@@ -15,8 +15,10 @@ import (
 )
 
 var (
+	Version string
 	verbose bool
-	log     = logger.StdLogger
+
+	log = logger.StdLogger
 )
 
 func main() {

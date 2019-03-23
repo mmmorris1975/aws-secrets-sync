@@ -22,5 +22,5 @@ clean:
 dist-clean: clean
 	rm -f go.sum
 
-docker: linux
+docker: linux Dockerfile
 	docker build . -t $(EXE):$(VER)

@@ -12,6 +12,7 @@ import (
 	logger "github.com/mmmorris1975/simple-logger"
 	"io"
 	"io/ioutil"
+	"os"
 )
 
 var (
@@ -53,6 +54,7 @@ func main() {
 	c := aws.NewConfig().WithLogger(log)
 	s := session.Must(session.NewSession(c))
 	sm := secretsmanager.New(s)
+	errCnt := 0
 
 	for k, v := range aws.StringMap(m) {
 		log.Debugf("%s => %s", k, *v)
@@ -61,9 +63,13 @@ func main() {
 		o, err := sm.PutSecretValue(&r)
 		if err != nil {
 			log.Warnf("error putting secret %s: %v", k, err)
+			errCnt++
+		} else {
+			log.Debugf("NAME: %s, ARN: %s", *o.Name, *o.ARN)
 		}
-		log.Debugf("NAME: %s, ARN: %s", *o.Name, *o.ARN)
 	}
+
+	os.Exit(errCnt)
 }
 
 func getReader(data []byte, gz bool) io.Reader {

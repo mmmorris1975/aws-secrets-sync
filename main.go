@@ -34,7 +34,7 @@ func main() {
 	gz := true
 	data, err := base64.StdEncoding.DecodeString(arg)
 	if err != nil {
-		// bad base64, assume plain text input
+		// bad base64, make a baseless assumption of plain text input
 		log.Debugf("error decoding base64 data: %v", err)
 		data = []byte(arg)
 		gz = false
@@ -58,10 +58,11 @@ func main() {
 		log.Debugf("%s => %s", k, *v)
 
 		r := secretsmanager.PutSecretValueInput{SecretId: aws.String(k), SecretString: v}
-		_, err := sm.PutSecretValue(&r)
+		o, err := sm.PutSecretValue(&r)
 		if err != nil {
 			log.Warnf("error putting secret %s: %v", k, err)
 		}
+		log.Debugf("NAME: %s, ARN: %s", *o.Name, *o.ARN)
 	}
 }
 
@@ -74,7 +75,7 @@ func getReader(data []byte, gz bool) io.Reader {
 	if gz {
 		r, err = gzip.NewReader(b)
 		if err != nil {
-			// bad gzip, assume incoming data isn't compressed
+			// bad gzip, boldly assume incoming data isn't compressed
 			log.Debugf("error creating gzip reader: %v", err)
 			b.Reset(data)
 			r = b

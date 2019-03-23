@@ -65,7 +65,7 @@ func main() {
 			log.Warnf("error putting secret %s: %v", k, err)
 			errCnt++
 		} else {
-			log.Debugf("NAME: %s, ARN: %s", *o.Name, *o.ARN)
+			log.Infof("Updated secret %s", *o.Name)
 		}
 	}
 

@@ -1,4 +1,4 @@
-module awesomeProject
+module secrets-sync
 
 go 1.12
 

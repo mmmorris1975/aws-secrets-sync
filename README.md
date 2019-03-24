@@ -2,10 +2,10 @@ The code and Dockerfile necessary to create a container which can upload values 
 that the sensitive values are not stored in plaintext in the Terraform state file.
 
 The program works by taking a value passed in as the 1st argument to the command, which is expected to be a json map of
-keys and values to upload to the service.  The preferred input format is a base64 encoded, gzip compressed string of
-the json values to upload.  Other supported formats are a base64 encoded string of json values (not compressed), or just
-the raw json value; however using values of these types may cause warning from the program, and are less preferred than
-the base64, gzip format for the values.
+keys and values to upload to the service, and calling the AWS Secrets Manager PutSecretValueInput API. The preferred
+input format is a base64 encoded, gzip compressed string of the json values to upload.  Other supported formats are a
+base64 encoded string of json values (not compressed), or just the raw json value directly; however using these types of
+input data may cause warning from the program, and are less preferred than the base64, gzip format for the values.
 
 If using this tool as part of the `secrets-manager` terraform module, then the input data encoding and compression is
 automatically handled for you.  If using the container or command outside of the terraform module, you will need to
@@ -31,5 +31,5 @@ The code for the tool can be built using the default target in the supplied Make
 `secrets-sync` in the current directory, appropriate for execution on the platform it was built on.
 
 A local docker container can be built using the `docker` target in the Makefile.  This will compile the tool for Linux,
-and using the Dockerfile in the repo, create an images with the name `secrets-sync` which will be tagged according to the
-most recent tag and commit as determined by running `git describe --tags`
+and use the Dockerfile in the repo to create an images with the name `secrets-sync`, which will be tagged according to
+the most recent tag and commit as determined by running `git describe --tags`

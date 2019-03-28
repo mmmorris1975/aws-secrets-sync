@@ -7,21 +7,15 @@ import (
 )
 
 type ParameterStoreBackend struct {
-	name        string
 	kmsRequired bool
 	c           *ssm.SSM
 }
 
 func NewParameterStoreBackend() *ParameterStoreBackend {
 	return &ParameterStoreBackend{
-		name:        "parameterstore",
 		kmsRequired: false,
 		c:           ssm.New(ses),
 	}
-}
-
-func (b *ParameterStoreBackend) Name() string {
-	return b.name
 }
 
 func (b *ParameterStoreBackend) KmsRequired() bool {

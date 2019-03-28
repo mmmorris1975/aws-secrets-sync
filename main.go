@@ -7,7 +7,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	logger "github.com/mmmorris1975/simple-logger"
 	"io/ioutil"
 	"os"
@@ -28,15 +31,16 @@ var (
 	versionArg bool
 
 	// AWS stuff
-	cfg    = aws.NewConfig().WithLogger(log)
-	ses    = session.Must(session.NewSession(cfg))
-	keyArn arn.ARN
+	cfg        = aws.NewConfig().WithLogger(log)
+	ses        = session.Must(session.NewSession(cfg))
+	keyArn     arn.ARN
+	dynamoSvc  = dynamodb.ServiceName
+	ssmSvc     = ssm.ServiceName
+	secretsSvc = secretsmanager.ServiceName
 
-	backends = map[string]SecretBackender{
-		"dynamodb":       NewDynamoDbBackend(),
-		"parameterstore": NewParameterStoreBackend(),
-		"secretsmanager": NewSecretsManagerBackend(),
-	}
+	backends = sort.StringSlice{dynamoSvc, ssmSvc, secretsSvc}
+
+	sb SecretBackender
 )
 
 // (option) env vars
@@ -47,18 +51,19 @@ var (
 // options
 // -V print versionArg
 func init() {
+	backends.Sort()
+
 	flag.StringVar(&backendArg, "b", os.Getenv("SECRETS_BACKEND"),
-		fmt.Sprintf("Secrets storage backend: %s", strings.Join(keys(backends), ", ")))
+		fmt.Sprintf("Secrets storage backend: %s", strings.Join(backends, ", ")))
 	flag.StringVar(&kmsKeyArg, "k", os.Getenv("KMS_KEY"),
 		fmt.Sprintf("KMS key ARN, ID, or alias (required for %s backend, optional for %s backend, not used for %s backend",
-			backends["dynamodb"].Name(), backends["parameterstore"].Name(), backends["secretsmanager"].Name()))
+			dynamoSvc, ssmSvc, secretsSvc))
 	flag.BoolVar(&verboseArg, "v", checkBoolEnv("VERBOSE"), "Print verboseArg output")
 	flag.BoolVar(&versionArg, "V", false, "Print program versionArg")
 }
 
 // interface type for conforming secrets backends
 type SecretBackender interface {
-	Name() string
 	KmsRequired() bool
 	Store(string, interface{}) error
 }
@@ -79,17 +84,6 @@ func main() {
 	//arg := flag.Arg(0)
 }
 
-func keys(m map[string]SecretBackender) []string {
-	a := make([]string, len(m))
-	i := 0
-	for k := range m {
-		a[i] = k
-		i++
-	}
-	sort.Strings(a)
-	return a
-}
-
 func checkBoolEnv(v string) (b bool) {
 	b, err := strconv.ParseBool(v)
 	if err != nil {
@@ -100,13 +94,19 @@ func checkBoolEnv(v string) (b bool) {
 
 // verify that we're called with a supported secrets backend, and, if used by the backend, the KMS key is valid
 func validateArgs() {
-	v, ok := backends[backendArg]
-	if !ok {
-		log.Fatalf("backend %s is not valid, must be one of: %s", backendArg, strings.Join(keys(backends), ", "))
+	backendLc := strings.ToLower(backendArg)
+	i := backends.Search(backendLc)
+
+	if i >= len(backends) || backends[i] != backendLc {
+		log.Fatalf("backend %s is not valid, must be one of: %s", backendArg, strings.Join(backends, ", "))
+	}
+
+	if err := backendFactory(backends[i]); err != nil {
+		log.Fatal(err)
 	}
 
 	// KMS key is required, or a KMS key was explicitly passed with the parameterstore backend
-	if v.KmsRequired() || (backendArg == "parameterstore" && len(kmsKeyArg) > 0) {
+	if sb.KmsRequired() || (backendArg == ssm.ServiceName && len(kmsKeyArg) > 0) {
 		c := kms.New(ses)
 		i := kms.DescribeKeyInput{KeyId: aws.String(kmsKeyArg)}
 		o, err := c.DescribeKey(&i)
@@ -119,6 +119,20 @@ func validateArgs() {
 			log.Fatalf("bad key ARN: %v", err)
 		}
 	}
+}
+
+func backendFactory(be string) error {
+	switch be {
+	case dynamoSvc:
+		sb = NewDynamoDbBackend()
+	case secretsSvc:
+		sb = NewSecretsManagerBackend()
+	case ssmSvc:
+		sb = NewParameterStoreBackend()
+	default:
+		return fmt.Errorf("unsupported backend %s", be)
+	}
+	return nil
 }
 
 func readBinary(value interface{}) ([]byte, error) {

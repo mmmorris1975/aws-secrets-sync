@@ -7,7 +7,6 @@ import (
 )
 
 type DynamoDbBackend struct {
-	name        string
 	kmsRequired bool
 	c           *dynamodb.DynamoDB
 	k           *kms.KMS
@@ -15,15 +14,10 @@ type DynamoDbBackend struct {
 
 func NewDynamoDbBackend() *DynamoDbBackend {
 	return &DynamoDbBackend{
-		name:        "dynamodb",
 		kmsRequired: true,
 		c:           dynamodb.New(ses),
 		k:           kms.New(ses),
 	}
-}
-
-func (b *DynamoDbBackend) Name() string {
-	return b.name
 }
 
 func (b *DynamoDbBackend) KmsRequired() bool {
@@ -31,7 +25,7 @@ func (b *DynamoDbBackend) KmsRequired() bool {
 }
 
 func (b *DynamoDbBackend) Store(key string, value interface{}) error {
-	enc, err := b.encrypt(value)
+	_, err := b.encrypt(value)
 	if err != nil {
 		return err
 	}
@@ -44,7 +38,8 @@ func (b *DynamoDbBackend) encrypt(value interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	// AWS SDK says that the encrypted value is automatically base64 encoded
+	// AWS SDK says that the encrypted value is automatically base64 encoded, although I'm skeptical
+	// max input size is 4096 bytes
 	i := kms.EncryptInput{KeyId: aws.String(keyArn.String()), Plaintext: data}
 	o, err := b.k.Encrypt(&i)
 	if err != nil {

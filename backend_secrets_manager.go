@@ -6,21 +6,15 @@ import (
 )
 
 type SecretsManagerBackend struct {
-	name        string
 	kmsRequired bool
 	c           *secretsmanager.SecretsManager
 }
 
 func NewSecretsManagerBackend() *SecretsManagerBackend {
 	return &SecretsManagerBackend{
-		name:        "secretsmanager",
 		kmsRequired: false,
 		c:           secretsmanager.New(ses),
 	}
-}
-
-func (b *SecretsManagerBackend) Name() string {
-	return b.name
 }
 
 func (b *SecretsManagerBackend) KmsRequired() bool {

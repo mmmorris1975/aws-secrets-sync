@@ -23,47 +23,103 @@ Usage of ./secrets-sync:
   -t string
     	dynamodb table name, required only for dynamodb backend, ignored by all others
   -v	Print verbose output
+  
+todo also describe env vars that can be used for configuration
 ```
 
 Backends
 --------
 
 ### SSM
+This backend will upload the data the the SSM Parameter Store service as Secure String types using the paths defined in
+the JSON keys.  If the using "pathed" or namespaced key names, AWS expects that the path values are separated by the `/`
+character, and that the key name value starts with a `/`
 
+A KMS key is not required to be supplied when using this backend.  If a key is not provided, the service default key will
+be used to encrypt the value.  The service default KMS key alias is `alias/aws/ssm`.
+
+The maximum size of the secret value is 4096 bytes.
+
+#### Example
+```text
+aws-secrets-sync -s ssm '{"/my/secret": "shhhh, this is a secret!"}'
+```
 
 ### Secrets Manager
+This backend will upload the data to the Secrets Manager service, using the JSON key as the name of the secret.
+If the value data is a string, then the data will be stored as a SecretString type, otherwise it will be stored as a
+SecretBinary type.  If the using "pathed" or namespaced key names, AWS expects that the path values are separated by the `/`
+character.  It is a preferred practice that you do **not** prefix the key path with a `/`, otherwise it will require the
+use of a '//' when referencing the parameter name if using the SSM Parameter Store -\> Secrets Manager magic parameter
+name link.  (see https://docs.aws.amazon.com/systems-manager/latest/userguide/integration-ps-secretsmanager.html for
+more info)
 
+The Secrets Manager service implements 2 distinct API methods, one to create the Secret resource (which contains metadata
+about the secret, including the Secret name and KMS key to encrypt with), and the other to define the Secret's value.
+This tool assumes that the Secret resource is already defined, and will not create new ones if it finds a key in the
+supplied JSON data that does not exist in the AWS service.  This means it is important that the name of the Secret in AWS,
+and the name of the key in the JSON match in order to update the value.  Since the KMS key is also defined as part of the
+Secret resource, it is not necessary to specify a KMS key when using this tool.  (It will be rightly ignored if you do
+supply one, however)
+
+The maximum size of the secret value is 7168 bytes.
+
+#### Example
+```text
+aws-secrets-sync -s secretsmanager '{"my/secret": "shhhh, this is a secret!"}'
+```
 
 ### DynamoDB
+This backend will upload the data to DynamoDB, using the JSON key as the partition key value in the provided table.
+Specifying a KMS key to use for encrypting the secret data is required when using this backend, as DynamoDB has no native
+ability to encrypt item attributes as part of the API.  The secret data is encrypted using the provided KMS key and stored
+as a base64 encoded value of the KMS ciphertext, and is stored using the attribute name `value`.
 
+The tool will inspect the specified DynamoDB table and dynamically determine the partition key attribute name.
+
+The maximum size of the secret value is 4096 bytes, since this is the maximum size of plaintext data the KMS service allows
+in a single Encrypt call.
+
+#### Example
+```text
+aws-secrets-sync -s dynamodb -t my-table -k alias/my/key '{"/my/secret": "shhhh, this is a secret!"}'
+```
 
 ### S3
+This backend will upload the data to S3, using the JSON key as the object key name in the provided bucket.
+Specifying a KMS key to use for encrypting the secret data is required when using this backend to correctly upload the
+object to S3 with encryption.  S3 transparently encrypts and decrypts the object data, provided that the API keys have
+the necessary Get/Put Object permissions, and Encrypt and Decrypt permissions for the KMS key in use.
 
+Since we are leveraging the encryption facilities of the S3 service to encrypt the secret values, in theory the maximum
+secret value size is bounded only by the limits of the S3 service
 
+#### Examples
+Store value as a command argument
+```text
+aws-secrets-sync -s s3 -b my-bucket -k alias/my/key '{"/my/secret": "shhhh, this is a secret!"}'
+```
 
-If using this tool as part of the `secrets-manager` terraform module, then the input data encoding and compression is
-automatically handled for you.  If using the container or command outside of the terraform module, you will need to
-ensure the incoming value is in the appropriate format.
+Store large value from a file
+```text
+aws-secrets-sync -s s3 -b my-bucket -k alias/my/key < /path/to/my/data
+```
 
 Docker example
 --------------
+An example to run the command using the docker container built from the supplied Dockerfile to store gzip'd input in the
+SSM Parameter Store service
 ```text
-docker run --rm -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN -e AWS_REGION secrets-sync \
- $(echo raw_json | gzip -c | base64 -i -)
-```
-
-Shell example
--------------
-```text
-/path/to/secrets-sync $(echo raw_json | gzip -c | base64 -i -)
+docker run --rm -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN -e AWS_REGION aws-secrets-sync \
+ -s ssm $(echo raw_json | gzip -c | base64 -i -)
 ```
 
 Building
 --------
 
 The code for the tool can be built using the default target in the supplied Makefile, which will create a file called
-`secrets-sync` in the current directory, appropriate for execution on the platform it was built on.
+`aws-secrets-sync` in the current directory, appropriate for execution on the platform it was built on.
 
 A local docker container can be built using the `docker` target in the Makefile.  This will compile the tool for Linux,
-and use the Dockerfile in the repo to create an images with the name `secrets-sync`, which will be tagged according to
+and use the Dockerfile in the repo to create an images with the name `aws-secrets-sync`, which will be tagged according to
 the most recent tag and commit as determined by running `git describe --tags`

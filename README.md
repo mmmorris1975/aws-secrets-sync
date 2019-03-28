@@ -2,11 +2,12 @@ The code and Dockerfile necessary to create a utility or container which can upl
 sensitive data.  This allows sensitive data to be synchronized to AWS for use with tools like Terraform without the need
 to store the sensitive data in the Terraform state file.
 
-The program works by taking a value passed in as the 1st argument to the command, which is expected to be a json map of
-keys and values to upload to the service, and calling the appropriate AWS service backend API to store the value. The
-preferred input format is a base64 encoded, gzip compressed string of the json values to upload.  Other supported formats
-are a base64 encoded string of json values (not compressed), or just the raw json value directly; however using these
-types of input data may cause warning from the program, and are less preferred than the base64, gzip format for the values.
+The program works by taking a value passed in as the 1st argument to the command, or the system standard input, which is
+expected to be a json map of keys and values to upload to the service, and calling the appropriate AWS service backend
+API to store the value. The preferred input format is a base64 encoded, gzip compressed string of the json values to
+upload.  Other supported formats are a base64 encoded string of json values (not compressed), or just the raw json value
+directly; however using these types of input data may cause warning from the program, and are less preferred than the
+base64, gzip format for the values.
 
 Usage
 -----

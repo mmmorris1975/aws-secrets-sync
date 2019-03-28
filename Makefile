@@ -1,4 +1,4 @@
-EXE  := secrets-sync
+EXE  := aws-secrets-sync
 VER  := $(shell git describe --tags)
 PATH := build:$(PATH)
 GOOS ?= $(shell go env GOOS)

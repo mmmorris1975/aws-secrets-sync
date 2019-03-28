@@ -1,4 +1,4 @@
-module secrets-sync
+module aws-secrets-sync
 
 go 1.12
 

@@ -12,11 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/ssm"
 	logger "github.com/mmmorris1975/simple-logger"
 	"io"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strconv"
@@ -33,6 +33,7 @@ var (
 	// program args
 	backendArg     string
 	dynamoTableArg string
+	bucketArg      string
 	kmsKeyArg      string
 	verboseArg     bool
 	versionArg     bool
@@ -43,21 +44,24 @@ var (
 	dynamoSvc  = dynamodb.ServiceName
 	ssmSvc     = ssm.ServiceName
 	secretsSvc = secretsmanager.ServiceName
+	s3Svc      = s3.ServiceName
 	keyArn     arn.ARN
 
-	backends = sort.StringSlice{dynamoSvc, ssmSvc, secretsSvc}
+	backends = sort.StringSlice{dynamoSvc, ssmSvc, secretsSvc, s3Svc}
 )
 
 func init() {
 	backends.Sort()
 
-	flag.StringVar(&backendArg, "b", os.Getenv("SECRETS_BACKEND"),
+	flag.StringVar(&backendArg, "s", os.Getenv("SECRETS_BACKEND"),
 		fmt.Sprintf("Secrets storage backend: %s", strings.Join(backends, ", ")))
 	flag.StringVar(&dynamoTableArg, "t", os.Getenv("DYNAMODB_TABLE"),
 		fmt.Sprintf("dynamodb table name, required only for %s backend, ignored by all others", dynamoSvc))
+	flag.StringVar(&bucketArg, "b", os.Getenv("S3_BUCKET"),
+		fmt.Sprintf("S3 bucket name, required only for %s backend, ignored by all others", s3Svc))
 	flag.StringVar(&kmsKeyArg, "k", os.Getenv("KMS_KEY"),
-		fmt.Sprintf("KMS key ARN, ID, or alias (required for %s backend, optional for %s backend, not used for %s backend)",
-			dynamoSvc, ssmSvc, secretsSvc))
+		fmt.Sprintf("KMS key ARN, ID, or alias (required for %s and %s backends, optional for %s backend, not used for %s backend)",
+			dynamoSvc, s3Svc, ssmSvc, secretsSvc))
 	flag.BoolVar(&verboseArg, "v", checkBoolEnv("VERBOSE"), "Print verbose output")
 	flag.BoolVar(&versionArg, "V", false, "Print program version")
 }
@@ -174,18 +178,24 @@ func backendFactory(be string) error {
 		sb = NewSecretsManagerBackend()
 	case ssmSvc:
 		sb = NewParameterStoreBackend()
+	case s3Svc:
+		if len(bucketArg) < 1 {
+			return fmt.Errorf("missing required bucket name for %s backend", s3Svc)
+		}
+
+		sb = NewS3Backend().WithBucket(bucketArg)
 	default:
 		return fmt.Errorf("unsupported backend %s", be)
 	}
 	return nil
 }
 
-func readBinary(value interface{}) ([]byte, error) {
+func readBinary(value interface{}) (io.Reader, error) {
 	b := bytes.NewBuffer(make([]byte, 0, 4096))
 	if _, err := fmt.Fprint(b, value); err != nil {
 		return nil, err
 	}
-	return ioutil.ReadAll(b)
+	return b, nil
 }
 
 func getReader() io.Reader {

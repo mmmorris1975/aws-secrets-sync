@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"io/ioutil"
 )
 
 // SecretsManagerBackend is the type for storing a KMS encrypted item attribute in AWS Secrets Manager
@@ -37,10 +38,16 @@ func (b *SecretsManagerBackend) Store(key string, value interface{}) error {
 	case string:
 		i.SecretString = aws.String(t)
 	default:
-		data, err := readBinary(value)
+		r, err := readBinary(value)
 		if err != nil {
 			return err
 		}
+
+		data, err := ioutil.ReadAll(r)
+		if err != nil {
+			return err
+		}
+
 		i.SecretBinary = data
 	}
 

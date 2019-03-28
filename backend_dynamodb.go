@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/kms"
+	"io/ioutil"
 )
 
 // DynamoDbBackend is the type for storing a KMS encrypted item attribute in DynamoDB
@@ -88,7 +89,12 @@ func (b *DynamoDbBackend) Store(key string, value interface{}) error {
 
 // max size of value is 4096 bytes due to max size of KMS encrypt operation input
 func (b *DynamoDbBackend) encrypt(value interface{}) (string, error) {
-	data, err := readBinary(value)
+	r, err := readBinary(value)
+	if err != nil {
+		return "", err
+	}
+
+	data, err := ioutil.ReadAll(r)
 	if err != nil {
 		return "", err
 	}

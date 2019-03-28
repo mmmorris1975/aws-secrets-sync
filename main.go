@@ -99,7 +99,7 @@ func main() {
 	j := json.NewDecoder(getReader())
 	for {
 		m := make(map[string]interface{})
-		if err := j.Decode(m); err != nil {
+		if err := j.Decode(&m); err != nil {
 			if err == io.EOF {
 				break
 			}

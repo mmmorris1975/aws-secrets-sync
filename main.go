@@ -24,6 +24,7 @@ import (
 )
 
 var (
+	// Version is the program version, defined at build time
 	Version string
 	sb      SecretBackender
 
@@ -47,31 +48,27 @@ var (
 	backends = sort.StringSlice{dynamoSvc, ssmSvc, secretsSvc}
 )
 
-// (option) env vars
-// (-b) SECRETS_BACKEND = parameterstore | secretsmanager | dynamodb
-// (-t) DYNAMODB_TABLE = required for dynamodb backend
-// (-k) KMS_KEY = KMS key arn, id, or alias
-// (-v) VERBOSE = verboseArg logging
-
-// options
-// -V print versionArg
 func init() {
 	backends.Sort()
 
 	flag.StringVar(&backendArg, "b", os.Getenv("SECRETS_BACKEND"),
 		fmt.Sprintf("Secrets storage backend: %s", strings.Join(backends, ", ")))
 	flag.StringVar(&dynamoTableArg, "t", os.Getenv("DYNAMODB_TABLE"),
-		fmt.Sprintf("dynamodb table name, required only for %s backend", dynamoSvc))
+		fmt.Sprintf("dynamodb table name, required only for %s backend, ignored by all others", dynamoSvc))
 	flag.StringVar(&kmsKeyArg, "k", os.Getenv("KMS_KEY"),
-		fmt.Sprintf("KMS key ARN, ID, or alias (required for %s backend, optional for %s backend, not used for %s backend",
+		fmt.Sprintf("KMS key ARN, ID, or alias (required for %s backend, optional for %s backend, not used for %s backend)",
 			dynamoSvc, ssmSvc, secretsSvc))
-	flag.BoolVar(&verboseArg, "v", checkBoolEnv("VERBOSE"), "Print verboseArg output")
-	flag.BoolVar(&versionArg, "V", false, "Print program versionArg")
+	flag.BoolVar(&verboseArg, "v", checkBoolEnv("VERBOSE"), "Print verbose output")
+	flag.BoolVar(&versionArg, "V", false, "Print program version")
 }
 
-// interface type for conforming secrets backends
+// SecretBackender is the interface type for conforming secrets backends
 type SecretBackender interface {
+	// KmsRequired returns true if the backend requires a KMS key argument for operation. Currently, only
+	// the dynamodb backend sets this to true, since it is unable to perform transparent encryption of item values
 	KmsRequired() bool
+
+	// Store will set the supplied value in the backend as the provided key
 	Store(string, interface{}) error
 }
 

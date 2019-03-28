@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/kms"
 )
 
+// DynamoDbBackend is the type for storing a KMS encrypted item attribute in DynamoDB
 type DynamoDbBackend struct {
 	kmsRequired bool
 	c           *dynamodb.DynamoDB
@@ -15,6 +16,8 @@ type DynamoDbBackend struct {
 	pk          string
 }
 
+// NewDynamoDbBackend creates a basic DynamoDB SecretsBackender.  Note that the table name
+// is not defined with this call, see WithTable() to set that before making any calls to Store()
 func NewDynamoDbBackend() *DynamoDbBackend {
 	return &DynamoDbBackend{
 		kmsRequired: true,
@@ -23,6 +26,8 @@ func NewDynamoDbBackend() *DynamoDbBackend {
 	}
 }
 
+// WithTable sets the DynamoDB table name to store the encrypted value.  The table will be inspected
+// to ensure it exists, and to determine what the Partition/HASH key attribute is
 func (b *DynamoDbBackend) WithTable(t string) *DynamoDbBackend {
 	b.table = t
 
@@ -44,10 +49,20 @@ func (b *DynamoDbBackend) WithTable(t string) *DynamoDbBackend {
 	return b
 }
 
+// KmsRequired returns whether or not this backend requires a KMS key to encrypt the value when
+// doing a Store().  For DynamoDB this will always be true since we need to explicitly do a KMS
+// Encrypt before we store the value in the table.
 func (b *DynamoDbBackend) KmsRequired() bool {
 	return b.kmsRequired
 }
 
+// Store writes the value to the table using the Partition key defined in the key parameter
+// All attribute values will be stored as String types.  In addition to the Partition key
+// attribute, the "encrypted" attribute will be set on the item with a value of "true", and
+// the "value" attribute will hold the base64 encoded value of the encrypted value.
+//
+// KMS limits the size of the encrypted data to 4096 bytes, so attempting to store values larger
+// than that is likely to result in an error.
 func (b *DynamoDbBackend) Store(key string, value interface{}) error {
 	data, err := b.encrypt(value)
 	if err != nil {

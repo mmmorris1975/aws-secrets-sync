@@ -25,6 +25,7 @@ import (
 
 var (
 	Version string
+	sb      SecretBackender
 
 	log = logger.StdLogger
 
@@ -38,14 +39,12 @@ var (
 	// AWS stuff
 	cfg        = aws.NewConfig().WithLogger(log)
 	ses        = session.Must(session.NewSession(cfg))
-	keyArn     arn.ARN
 	dynamoSvc  = dynamodb.ServiceName
 	ssmSvc     = ssm.ServiceName
 	secretsSvc = secretsmanager.ServiceName
+	keyArn     arn.ARN
 
 	backends = sort.StringSlice{dynamoSvc, ssmSvc, secretsSvc}
-
-	sb SecretBackender
 )
 
 // (option) env vars
@@ -168,7 +167,12 @@ func backendFactory(be string) error {
 		if len(dynamoTableArg) < 1 {
 			return fmt.Errorf("missing required table name for %s backend", dynamoSvc)
 		}
+
 		sb = NewDynamoDbBackend().WithTable(dynamoTableArg)
+
+		if sb == nil {
+			return fmt.Errorf("dynamodb backend setup returned nil")
+		}
 	case secretsSvc:
 		sb = NewSecretsManagerBackend()
 	case ssmSvc:

@@ -31,7 +31,8 @@ func (b *DynamoDbBackend) WithTable(t string) *DynamoDbBackend {
 	i := dynamodb.DescribeTableInput{TableName: aws.String(t)}
 	o, err := b.c.DescribeTable(&i)
 	if err != nil {
-		// todo handle error
+		log.Errorf("error describing dynamodb table, expect failures: %v", err)
+		return nil
 	}
 
 	for _, v := range o.Table.KeySchema {

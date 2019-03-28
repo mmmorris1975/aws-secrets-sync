@@ -39,7 +39,7 @@ func (b *DynamoDbBackend) encrypt(value interface{}) ([]byte, error) {
 	}
 
 	// AWS SDK says that the encrypted value is automatically base64 encoded, although I'm skeptical
-	// max input size is 4096 bytes
+	// max input size for Plaintext is 4096 bytes
 	i := kms.EncryptInput{KeyId: aws.String(keyArn.String()), Plaintext: data}
 	o, err := b.k.Encrypt(&i)
 	if err != nil {

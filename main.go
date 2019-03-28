@@ -187,6 +187,8 @@ func backendFactory(be string) error {
 	default:
 		return fmt.Errorf("unsupported backend %s", be)
 	}
+
+	log.Debugf("setting backend to %s", be)
 	return nil
 }
 
@@ -199,12 +201,20 @@ func readBinary(value interface{}) (io.Reader, error) {
 }
 
 func getReader() io.Reader {
-	in := strings.NewReader(flag.Arg(0))
+	var in io.ReadSeeker
+
+	arg := flag.Arg(0)
+	if len(arg) > 0 {
+		in = strings.NewReader(flag.Arg(0))
+	} else {
+		in = os.Stdin
+	}
 
 	b64 := base64.NewDecoder(base64.StdEncoding, in)
 	if _, err := b64.Read(make([]byte, 512)); err != nil {
 		// not base 64, so can't be something that's compressed, probably just plain text
 		// in which case, just return our string reader
+		log.Debugf("base64 error: %v", err)
 		in.Seek(0, io.SeekStart)
 		return in
 	}
@@ -213,9 +223,11 @@ func getReader() io.Reader {
 	if err != nil {
 		// I think this will raise an error if it's not a gzip compressed stream
 		// in which case, just return the base64 reader
+		log.Debugf("gzip error: %v", err)
 		in.Seek(0, io.SeekStart)
 		return b64
 	}
 
+	log.Debugf("returning gzip base64 reader")
 	return gz
 }

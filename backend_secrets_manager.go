@@ -51,6 +51,7 @@ func (b *SecretsManagerBackend) Store(key string, value interface{}) error {
 		i.SecretBinary = data
 	}
 
+	log.Debugf("setting secret name %s", key)
 	o, err := b.c.PutSecretValue(&i)
 	if err != nil {
 		return err

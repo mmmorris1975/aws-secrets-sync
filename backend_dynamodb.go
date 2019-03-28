@@ -80,6 +80,7 @@ func (b *DynamoDbBackend) Store(key string, value interface{}) error {
 		},
 	}
 
+	log.Debugf("writing key %s in DynamoDB table %s", key, b.table)
 	if _, err := b.c.PutItem(&i); err != nil {
 		return err
 	}

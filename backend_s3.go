@@ -63,6 +63,7 @@ func (b *S3Backend) Store(key string, value interface{}) error {
 		StorageClass:         aws.String(b.storageClass),
 	}
 
+	log.Debugf("uploading S3 object to %s", key)
 	o, err := b.c.Upload(&i)
 	if err != nil {
 		return err

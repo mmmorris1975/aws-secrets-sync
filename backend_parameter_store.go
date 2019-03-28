@@ -43,6 +43,7 @@ func (b *ParameterStoreBackend) Store(key string, value interface{}) error {
 			i.KeyId = aws.String(keyArn.String())
 		}
 
+		log.Debugf("writing parameter name %s", key)
 		o, err := b.c.PutParameter(&i)
 		if err != nil {
 			return err

@@ -21,8 +21,7 @@ func (b *SecretsManagerBackend) KmsRequired() bool {
 	return b.kmsRequired
 }
 
-// max size of value is 4096 bytes per users guide, although service limits page says 7168 bytes
-// maybe 7168 is the max ciphertext length and 4096 is the max plaintext length?
+// max size of value is 7168 (enforced by AWS)
 func (b *SecretsManagerBackend) Store(key string, value interface{}) error {
 	i := secretsmanager.PutSecretValueInput{SecretId: aws.String(key)}
 

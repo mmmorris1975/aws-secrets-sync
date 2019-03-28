@@ -22,7 +22,7 @@ func (b *ParameterStoreBackend) KmsRequired() bool {
 	return b.kmsRequired
 }
 
-// max size of value is 4096 bytes
+// max size of value is 4096 bytes (enforced by AWS)
 func (b *ParameterStoreBackend) Store(key string, value interface{}) error {
 	switch t := value.(type) {
 	case string:

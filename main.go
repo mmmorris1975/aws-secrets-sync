@@ -2,6 +2,9 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
+	"encoding/base64"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
@@ -12,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/ssm"
 	logger "github.com/mmmorris1975/simple-logger"
+	"io"
 	"io/ioutil"
 	"os"
 	"sort"
@@ -25,10 +29,11 @@ var (
 	log = logger.StdLogger
 
 	// program args
-	backendArg string
-	kmsKeyArg  string
-	verboseArg bool
-	versionArg bool
+	backendArg     string
+	dynamoTableArg string
+	kmsKeyArg      string
+	verboseArg     bool
+	versionArg     bool
 
 	// AWS stuff
 	cfg        = aws.NewConfig().WithLogger(log)
@@ -45,6 +50,7 @@ var (
 
 // (option) env vars
 // (-b) SECRETS_BACKEND = parameterstore | secretsmanager | dynamodb
+// (-t) DYNAMODB_TABLE = required for dynamodb backend
 // (-k) KMS_KEY = KMS key arn, id, or alias
 // (-v) VERBOSE = verboseArg logging
 
@@ -55,6 +61,8 @@ func init() {
 
 	flag.StringVar(&backendArg, "b", os.Getenv("SECRETS_BACKEND"),
 		fmt.Sprintf("Secrets storage backend: %s", strings.Join(backends, ", ")))
+	flag.StringVar(&dynamoTableArg, "t", os.Getenv("DYNAMODB_TABLE"),
+		fmt.Sprintf("dynamodb table name, required only for %s backend", dynamoSvc))
 	flag.StringVar(&kmsKeyArg, "k", os.Getenv("KMS_KEY"),
 		fmt.Sprintf("KMS key ARN, ID, or alias (required for %s backend, optional for %s backend, not used for %s backend",
 			dynamoSvc, ssmSvc, secretsSvc))
@@ -79,9 +87,37 @@ func main() {
 		log.Printf("VERSION: %s", Version)
 	}
 
-	validateArgs()
+	if err := validateBackend(); err != nil {
+		log.Fatal(err)
+	}
 
-	//arg := flag.Arg(0)
+	if err := validateKey(); err != nil {
+		log.Fatal(err)
+	}
+
+	errCnt := 0
+	j := json.NewDecoder(getReader())
+	for {
+		m := make(map[string]interface{})
+		if err := j.Decode(m); err != nil {
+			if err == io.EOF {
+				break
+			}
+			log.Errorf("error decoding json: %v", err)
+			errCnt++
+		}
+
+		for k, v := range m {
+			if err := sb.Store(k, v); err != nil {
+				log.Errorf("error storing secret: %v", err)
+				errCnt++
+			} else {
+				log.Infof("updated secret %s", k)
+			}
+		}
+	}
+
+	os.Exit(errCnt)
 }
 
 func checkBoolEnv(v string) (b bool) {
@@ -92,39 +128,47 @@ func checkBoolEnv(v string) (b bool) {
 	return b
 }
 
-// verify that we're called with a supported secrets backend, and, if used by the backend, the KMS key is valid
-func validateArgs() {
+// verify that we're called with a supported secrets backend
+func validateBackend() error {
 	backendLc := strings.ToLower(backendArg)
 	i := backends.Search(backendLc)
 
 	if i >= len(backends) || backends[i] != backendLc {
-		log.Fatalf("backend %s is not valid, must be one of: %s", backendArg, strings.Join(backends, ", "))
+		return fmt.Errorf("backend %s is not valid, must be one of: %s", backendArg, strings.Join(backends, ", "))
 	}
 
 	if err := backendFactory(backends[i]); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	// KMS key is required, or a KMS key was explicitly passed with the parameterstore backend
-	if sb.KmsRequired() || (backendArg == ssm.ServiceName && len(kmsKeyArg) > 0) {
+	return nil
+}
+
+// KMS key is required, or a KMS key was explicitly passed with the ssm backend
+func validateKey() error {
+	if (sb != nil && sb.KmsRequired()) || (backendArg == ssm.ServiceName && len(kmsKeyArg) > 0) {
 		c := kms.New(ses)
 		i := kms.DescribeKeyInput{KeyId: aws.String(kmsKeyArg)}
 		o, err := c.DescribeKey(&i)
 		if err != nil {
-			log.Fatalf("failed to lookup KMS key %s, error: %v", kmsKeyArg, err)
+			return fmt.Errorf("failed to lookup KMS key %s, error: %v", kmsKeyArg, err)
 		}
 
 		keyArn, err = arn.Parse(*o.KeyMetadata.Arn)
 		if err != nil {
-			log.Fatalf("bad key ARN: %v", err)
+			return fmt.Errorf("bad key ARN: %v", err)
 		}
 	}
+	return nil
 }
 
 func backendFactory(be string) error {
 	switch be {
 	case dynamoSvc:
-		sb = NewDynamoDbBackend()
+		if len(dynamoTableArg) < 1 {
+			return fmt.Errorf("missing required table name for %s backend", dynamoSvc)
+		}
+		sb = NewDynamoDbBackend().WithTable(dynamoTableArg)
 	case secretsSvc:
 		sb = NewSecretsManagerBackend()
 	case ssmSvc:
@@ -136,81 +180,31 @@ func backendFactory(be string) error {
 }
 
 func readBinary(value interface{}) ([]byte, error) {
-	b := new(bytes.Buffer)
+	b := bytes.NewBuffer(make([]byte, 0, 4096))
 	if _, err := fmt.Fprint(b, value); err != nil {
 		return nil, err
 	}
 	return ioutil.ReadAll(b)
 }
 
-/////////////////////////////////////////
-//func main() {
-//	flag.BoolVar(&verboseArg, "v", false, "Print verboseArg output")
-//	flag.Parse()
-//
-//	if verboseArg {
-//		log.SetLevel(logger.DEBUG)
-//	}
-//
-//	arg := flag.Arg(0)
-//
-//	gz := true
-//	data, err := base64.StdEncoding.DecodeString(arg)
-//	if err != nil {
-//		// bad base64, make a baseless assumption of plain text input
-//		log.Debugf("error decoding base64 data: %v", err)
-//		data = []byte(arg)
-//		gz = false
-//	}
-//
-//	j, err := ioutil.ReadAll(getReader(data, gz))
-//	if err != nil {
-//		log.Fatalf("error reading data: %v", err)
-//	}
-//
-//	var m map[string]string
-//	if err := json.Unmarshal(j, &m); err != nil {
-//		log.Fatalf("error unmarshaling json: %v", err)
-//	}
-//
-//	c := aws.NewConfig().WithLogger(log)
-//	s := session.Must(session.NewSession(c))
-//	sm := secretsmanager.New(s)
-//	errCnt := 0
-//
-//	for k, v := range aws.StringMap(m) {
-//		log.Debugf("%s => %s", k, *v)
-//
-//		r := secretsmanager.PutSecretValueInput{SecretId: aws.String(k), SecretString: v}
-//		o, err := sm.PutSecretValue(&r)
-//		if err != nil {
-//			log.Warnf("error putting secret %s: %v", k, err)
-//			errCnt++
-//		} else {
-//			log.Infof("Updated secret %s", *o.Name)
-//		}
-//	}
-//
-//	os.Exit(errCnt)
-//}
-//
-//func getReader(data []byte, gz bool) io.Reader {
-//	var r io.Reader
-//	var err error
-//
-//	b := bytes.NewReader(data)
-//
-//	if gz {
-//		r, err = gzip.NewReader(b)
-//		if err != nil {
-//			// bad gzip, boldly assume incoming data isn't compressed
-//			log.Debugf("error creating gzip reader: %v", err)
-//			b.Reset(data)
-//			r = b
-//		}
-//	} else {
-//		r = b
-//	}
-//
-//	return r
-//}
+func getReader() io.Reader {
+	in := strings.NewReader(flag.Arg(0))
+
+	b64 := base64.NewDecoder(base64.StdEncoding, in)
+	if _, err := b64.Read(make([]byte, 512)); err != nil {
+		// not base 64, so can't be something that's compressed, probably just plain text
+		// in which case, just return our string reader
+		in.Seek(0, io.SeekStart)
+		return in
+	}
+
+	gz, err := gzip.NewReader(b64)
+	if err != nil {
+		// I think this will raise an error if it's not a gzip compressed stream
+		// in which case, just return the base64 reader
+		in.Seek(0, io.SeekStart)
+		return b64
+	}
+
+	return gz
+}

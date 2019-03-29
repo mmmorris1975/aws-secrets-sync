@@ -63,7 +63,7 @@ func init() {
 	flag.StringVar(&kmsKeyArg, "k", os.Getenv("KMS_KEY"),
 		fmt.Sprintf("KMS key ARN, ID, or alias (required for %s and %s backends, optional for %s backend, not used for %s backend)",
 			dynamoSvc, s3Svc, ssmSvc, secretsSvc))
-	flag.BoolVar(&oneShotArg, "o", checkBoolEnv("ONE_SHOT"), "run in one-shot mode")
+	flag.BoolVar(&oneShotArg, "o", checkBoolEnv("ONE_SHOT"), "run in one-shot mode, providing the key and value to store on the command line")
 	flag.BoolVar(&verboseArg, "v", checkBoolEnv("VERBOSE"), "Print verbose output")
 	flag.BoolVar(&versionArg, "V", false, "Print program version")
 }

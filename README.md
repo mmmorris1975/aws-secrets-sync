@@ -16,12 +16,13 @@ base64, gzip format for the values.
 Usage
 -----
 ```text
-Usage of secrets-sync:
+Usage of aws-secrets-sync:
   -V	Print program version
   -b string
     	S3 bucket name, required only for s3 backend, ignored by all others
   -k string
     	KMS key ARN, ID, or alias (required for dynamodb and s3 backends, optional for ssm backend, not used for secretsmanager backend)
+  -o	run in one-shot mode, providing the key and value to store on the command line
   -s string
     	Secrets storage backend: dynamodb, s3, secretsmanager, ssm
   -t string
@@ -37,6 +38,7 @@ The tool behavior can also be modified using environment variables detailed in t
 | SECRETS_BACKEND  | The secret backend to use for managing the secret data. Equivalent to the `-s` option. |
 | KMS_KEY          | The KMS key ARN, ID, or alias to use to encrypt the secret data. Equivalent to the `-k` option. |
 | VERBOSE          | Print verbose output. Equivalent to the `-v` option. |
+| ONE_SHOT         | Use 'one-shot' mode storing the key and value from the command line. Equivalent to the `-o` option. |
 | DYNAMODB_TABLE   | The DynamoDB table name to use for storing the secrets. Equivalent to the `-t` option.
 | S3_BUCKET        | The S3 bucket to use for storing the secrets. Equivalent to the `-b` option. |
 | S3_STORAGE_CLASS | Set the S3 storage class for the secrets.  Refer to S3 service documentation for valid values. |
@@ -135,6 +137,24 @@ aws-secrets-sync -s s3 -b my-bucket -k alias/my/key < /path/to/my/data
 
 #### IAM Permissions Required
 TODO
+
+
+One-Shot Mode
+-------------
+The tool support execution using a 'one-shot' mode where the key is supplied as a command line argument, and the value
+is supplied as a command line argument, or via stdin.  This allows you to store simple data, or possibly very large
+values, without having to roll it into a json document first.
+
+#### Examples
+Providing the key and value on the command line
+```text
+aws-secrets-sync -s ssm -o my-key my-value
+```
+
+Providing the key on the command line and providing the value on stdin.  In this case uploading a large file to S3
+```text
+aws-secrets-sync -s s3 -b my-bucket -k alias/my-kms-key -o my-key < /path/to/a/large_file
+```
 
 
 Docker example

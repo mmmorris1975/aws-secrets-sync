@@ -3,13 +3,14 @@ package main
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
 	"io/ioutil"
 )
 
 // SecretsManagerBackend is the type for storing a KMS encrypted item attribute in AWS Secrets Manager
 type SecretsManagerBackend struct {
 	kmsRequired bool
-	c           *secretsmanager.SecretsManager
+	c           secretsmanageriface.SecretsManagerAPI
 }
 
 // NewSecretsManagerBackend creates a Secrets Manager SecretsBackender.

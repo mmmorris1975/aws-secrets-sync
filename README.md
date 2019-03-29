@@ -1,3 +1,7 @@
+# aws-secrets-sync
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/mmmorris1975/aws-secrets-sync)](https://goreportcard.com/report/github.com/mmmorris1975/aws-secrets-sync)
+
 The code and Dockerfile necessary to create a program or container which can upload values to AWS services which can store
 sensitive data.  This allows sensitive data to be synchronized to AWS for use with tools like Terraform without the need
 to store the sensitive data in the Terraform state file.

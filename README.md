@@ -1,4 +1,4 @@
-The code and Dockerfile necessary to create a utility or container which can upload values to AWS services which can store
+The code and Dockerfile necessary to create a program or container which can upload values to AWS services which can store
 sensitive data.  This allows sensitive data to be synchronized to AWS for use with tools like Terraform without the need
 to store the sensitive data in the Terraform state file.
 
@@ -12,7 +12,7 @@ base64, gzip format for the values.
 Usage
 -----
 ```text
-Usage of ./secrets-sync:
+Usage of secrets-sync:
   -V	Print program version
   -b string
     	S3 bucket name, required only for s3 backend, ignored by all others
@@ -72,8 +72,8 @@ more info)
 The Secrets Manager service implements 2 distinct API methods, one to create the Secret resource (which contains metadata
 about the secret, including the Secret name and KMS key to encrypt with), and the other to define the Secret's value.
 This tool assumes that the Secret resource is already defined, and will not create new ones if it finds a key in the
-supplied JSON data that does not exist in the AWS service.  This means it is important that the name of the Secret in AWS,
-and the name of the key in the JSON match in order to update the value.  Since the KMS key is also defined as part of the
+supplied JSON data that does not exist in the AWS service.  This means it is important that the name of the Secret in AWS
+and the name of the key in the JSON match, in order to update the value.  Since the KMS key is also defined as part of the
 Secret resource, it is not necessary to specify a KMS key when using this tool.  (It will be rightly ignored if you do
 supply one, however)
 
@@ -94,9 +94,10 @@ Specifying a KMS key to use for encrypting the secret data is required when usin
 ability to encrypt item attributes as part of the API.  The secret data is encrypted using the provided KMS key and stored
 as a base64 encoded value of the KMS ciphertext, and is stored using the attribute name `value`.
 
-The tool will inspect the specified DynamoDB table and dynamically determine the partition key attribute name.
+The tool will inspect the specified DynamoDB table and dynamically determine the partition key attribute name.  Implying
+that the DynamoDB table already exists before running this tool.
 
-The maximum size of the secret value is 4096 bytes, since this is the maximum size of plaintext data the KMS service allows
+The maximum size of the secret value is 4096 bytes, as this is the maximum size of plaintext data the KMS service allows
 in a single Encrypt call.
 
 #### Example
@@ -115,7 +116,7 @@ object to S3 with encryption.  S3 transparently encrypts and decrypts the object
 the necessary Get/Put Object permissions, and Encrypt and Decrypt permissions for the KMS key in use.
 
 Since we are leveraging the encryption facilities of the S3 service to encrypt the secret values, in theory the maximum
-secret value size is bounded only by the limits of the S3 service
+secret value size is bound only by the limits of the S3 service
 
 #### Examples
 Store value as a command argument

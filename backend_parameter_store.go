@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 )
 
 // ParameterStoreBackend is the type for storing a KMS encrypted item attribute in SSM Parameter Store
 type ParameterStoreBackend struct {
 	kmsRequired bool
-	c           *ssm.SSM
+	c           ssmiface.SSMAPI
 }
 
 // NewParameterStoreBackend creates a SSM Parameter Store SecretsBackender.

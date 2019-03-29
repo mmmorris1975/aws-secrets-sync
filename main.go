@@ -35,6 +35,7 @@ var (
 	dynamoTableArg string
 	bucketArg      string
 	kmsKeyArg      string
+	oneShotArg     bool
 	verboseArg     bool
 	versionArg     bool
 
@@ -62,6 +63,7 @@ func init() {
 	flag.StringVar(&kmsKeyArg, "k", os.Getenv("KMS_KEY"),
 		fmt.Sprintf("KMS key ARN, ID, or alias (required for %s and %s backends, optional for %s backend, not used for %s backend)",
 			dynamoSvc, s3Svc, ssmSvc, secretsSvc))
+	flag.BoolVar(&oneShotArg, "o", checkBoolEnv("ONE_SHOT"), "run in one-shot mode")
 	flag.BoolVar(&verboseArg, "v", checkBoolEnv("VERBOSE"), "Print verbose output")
 	flag.BoolVar(&versionArg, "V", false, "Print program version")
 }
@@ -96,31 +98,81 @@ func main() {
 	}
 
 	errCnt := 0
-	j := json.NewDecoder(getReader())
+	if oneShotArg {
+		var v interface{}
+
+		if len(flag.Args()) > 1 {
+			v = flag.Arg(1)
+		} else {
+			v = os.Stdin
+		}
+
+		if err := oneShotHandler(flag.Arg(0), v); err != nil {
+			log.Fatalf("error storing secret: %v", err)
+		}
+	} else {
+		var in interface{}
+
+		if len(flag.Arg(0)) > 0 {
+			in = flag.Arg(0)
+		} else {
+			in = os.Stdin
+		}
+
+		errCnt = jsonHandler(in)
+	}
+
+	os.Exit(errCnt)
+}
+
+func oneShotHandler(k string, v interface{}) error {
+	if err := sb.Store(k, v); err != nil {
+		return err
+	}
+
+	log.Infof("updated secret %s", k)
+	return nil
+}
+
+func jsonHandler(in interface{}) int {
+	var errs int
+
+	r := getReader(in)
+	if r == nil {
+		log.Error("received a nil reader to handle json input, something has gone very wrong")
+		errs++
+		return errs
+	}
+
+	j := json.NewDecoder(r)
 	for {
 		m := make(map[string]interface{})
 		if err := j.Decode(&m); err != nil {
 			if err == io.EOF {
 				break
 			}
+
+			// bad json, should probably not continue
 			log.Errorf("error decoding json: %v", err)
-			errCnt++
+			errs++
+			break
 		}
 
 		for k, v := range m {
 			if err := sb.Store(k, v); err != nil {
 				log.Errorf("error storing secret: %v", err)
-				errCnt++
+				errs++
 			} else {
 				log.Infof("updated secret %s", k)
 			}
 		}
 	}
 
-	os.Exit(errCnt)
+	return errs
 }
 
-func checkBoolEnv(v string) (b bool) {
+// truth-y values are 1, t, T, TRUE, true, True; everything else is false
+func checkBoolEnv(v string) bool {
 	b, err := strconv.ParseBool(v)
 	if err != nil {
 		b = false
@@ -201,22 +253,31 @@ func readBinary(value interface{}) (io.Reader, error) {
 	return b, nil
 }
 
-func getReader() io.Reader {
+func getReader(data interface{}) io.Reader {
 	var in io.ReadSeeker
 
-	arg := flag.Arg(0)
-	if len(arg) > 0 {
-		in = strings.NewReader(flag.Arg(0))
-	} else {
-		in = os.Stdin
+	switch t := data.(type) {
+	case string:
+		in = strings.NewReader(t)
+
+		// 4 bytes is the minimum length of a base64 encoded single character, so if the input is less than that
+		// there's no way it can be base64 encoded and there's no need to continue further
+		if len(t) < 4 {
+			return in
+		}
+	case io.ReadSeeker:
+		in = t
+	case []byte:
+		in = bytes.NewReader(t)
+	default:
+		// since this is an internal method only, we'll pretend this is ok
+		// and add a case statement if a new use case pops up
+		return nil
 	}
 
-	b64 := base64.NewDecoder(base64.StdEncoding, in)
-	if _, err := b64.Read(make([]byte, 512)); err != nil {
-		// not base 64, so can't be something that's compressed, probably just plain text
-		// in which case, just return our string reader
-		log.Debugf("base64 error: %v", err)
-		in.Seek(0, io.SeekStart)
+	b64, err := checkBase64(in)
+	if err != nil {
+		log.Debugf("returning source reader, base64 error: %v", err)
 		return in
 	}
 
@@ -224,11 +285,31 @@ func getReader() io.Reader {
 	if err != nil {
 		// I think this will raise an error if it's not a gzip compressed stream
 		// in which case, just return the base64 reader
-		log.Debugf("gzip error: %v", err)
-		in.Seek(0, io.SeekStart)
-		return b64
+		if err != io.EOF {
+			log.Debugf("returning base64 reader, gzip error: %v", err)
+			in.Seek(0, io.SeekStart)
+			return b64
+		}
 	}
 
 	log.Debugf("returning gzip base64 reader")
 	return gz
+}
+
+// if the input is text which is also a valid base64 string, this method will happily
+// decode the value to bytes, just so ya know
+func checkBase64(in io.ReadSeeker) (io.Reader, error) {
+	defer in.Seek(0, io.SeekStart)
+
+	buf := make([]byte, 4096)
+	n, err := in.Read(buf)
+	if err != nil && err != io.EOF {
+		return nil, err
+	}
+
+	if _, err := base64.StdEncoding.Decode(make([]byte, n), buf[0:n]); err != nil {
+		return nil, err
+	}
+
+	return base64.NewDecoder(base64.StdEncoding, in), nil
 }

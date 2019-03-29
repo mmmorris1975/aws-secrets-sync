@@ -169,10 +169,11 @@ func backendFactory(be string) error {
 			return fmt.Errorf("missing required table name for %s backend", dynamoSvc)
 		}
 
-		sb = NewDynamoDbBackend().WithTable(dynamoTableArg)
+		var err error
+		sb, err = NewDynamoDbBackend().WithTable(dynamoTableArg)
 
-		if sb == nil {
-			return fmt.Errorf("dynamodb backend setup returned nil")
+		if err != nil {
+			return err
 		}
 	case secretsSvc:
 		sb = NewSecretsManagerBackend()

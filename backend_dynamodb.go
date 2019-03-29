@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/kms"
@@ -29,16 +30,13 @@ func NewDynamoDbBackend() *DynamoDbBackend {
 
 // WithTable sets the DynamoDB table name to store the encrypted value.  The table will be inspected
 // to ensure it exists, and to determine what the Partition/HASH key attribute is
-func (b *DynamoDbBackend) WithTable(t string) *DynamoDbBackend {
+func (b *DynamoDbBackend) WithTable(t string) (*DynamoDbBackend, error) {
 	b.table = t
 
-	// describe the dynamodb table to find determine the HASH key for the table
-	// instead of having static expectations for the key attribute name
 	i := dynamodb.DescribeTableInput{TableName: aws.String(t)}
 	o, err := b.c.DescribeTable(&i)
 	if err != nil {
-		log.Errorf("error describing dynamodb table, expect failures: %v", err)
-		return nil
+		return nil, fmt.Errorf("error describing dynamodb table: %v", err)
 	}
 
 	for _, v := range o.Table.KeySchema {
@@ -47,7 +45,7 @@ func (b *DynamoDbBackend) WithTable(t string) *DynamoDbBackend {
 		}
 	}
 
-	return b
+	return b, nil
 }
 
 // KmsRequired returns whether or not this backend requires a KMS key to encrypt the value when

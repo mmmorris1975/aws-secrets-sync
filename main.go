@@ -190,6 +190,10 @@ func backendFactory(be string) error {
 }
 
 func readBinary(value interface{}) (io.Reader, error) {
+	if value == nil {
+		return nil, fmt.Errorf("nil value")
+	}
+
 	b := bytes.NewBuffer(make([]byte, 0, 4096))
 	if _, err := fmt.Fprint(b, value); err != nil {
 		return nil, err

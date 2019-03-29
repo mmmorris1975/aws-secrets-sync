@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go/service/kms/kmsiface"
 	"io/ioutil"
 )
 
 // DynamoDbBackend is the type for storing a KMS encrypted item attribute in DynamoDB
 type DynamoDbBackend struct {
 	kmsRequired bool
-	c           *dynamodb.DynamoDB
-	k           *kms.KMS
+	c           dynamodbiface.DynamoDBAPI
+	k           kmsiface.KMSAPI
 	table       string
 	pk          string
 }

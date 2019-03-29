@@ -30,7 +30,7 @@ func TestNewParameterStoreBackend(t *testing.T) {
 	t.Run("nil session", func(t *testing.T) {
 		b := NewParameterStoreBackend()
 		if b == nil {
-			t.Errorf("recieved nil ParameterStoreBackend object")
+			t.Errorf("received nil ParameterStoreBackend object")
 			return
 		}
 	})
@@ -39,7 +39,7 @@ func TestNewParameterStoreBackend(t *testing.T) {
 		ses = session.Must(session.NewSession())
 		b := NewParameterStoreBackend()
 		if b == nil {
-			t.Errorf("recieved nil ParameterStoreBackend object")
+			t.Errorf("received nil ParameterStoreBackend object")
 			return
 		}
 	})

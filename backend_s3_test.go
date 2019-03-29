@@ -17,7 +17,7 @@ func TestNewS3Backend(t *testing.T) {
 	t.Run("nil session", func(t *testing.T) {
 		d := NewS3Backend()
 		if d == nil {
-			t.Errorf("recieved nil DynamoDbBackend object")
+			t.Errorf("received nil DynamoDbBackend object")
 			return
 		}
 	})
@@ -26,7 +26,7 @@ func TestNewS3Backend(t *testing.T) {
 		ses = session.Must(session.NewSession())
 		d := NewS3Backend()
 		if d == nil {
-			t.Errorf("recieved nil DynamoDbBackend object")
+			t.Errorf("received nil DynamoDbBackend object")
 			return
 		}
 	})

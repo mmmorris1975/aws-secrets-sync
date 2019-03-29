@@ -64,7 +64,7 @@ func TestNewDynamoDbBackend(t *testing.T) {
 	t.Run("nil session", func(t *testing.T) {
 		d := NewDynamoDbBackend()
 		if d == nil {
-			t.Errorf("recieved nil DynamoDbBackend object")
+			t.Errorf("received nil DynamoDbBackend object")
 			return
 		}
 	})
@@ -73,7 +73,7 @@ func TestNewDynamoDbBackend(t *testing.T) {
 		ses = session.Must(session.NewSession())
 		d := NewDynamoDbBackend()
 		if d == nil {
-			t.Errorf("recieved nil DynamoDbBackend object")
+			t.Errorf("received nil DynamoDbBackend object")
 			return
 		}
 	})
@@ -107,7 +107,7 @@ func TestDynamoDbBackend_WithTable(t *testing.T) {
 	t.Run("bad name", func(t *testing.T) {
 		_, err := d.WithTable("x")
 		if err == nil {
-			t.Error("did not recieve expected error")
+			t.Error("did not receive expected error")
 			return
 		}
 	})

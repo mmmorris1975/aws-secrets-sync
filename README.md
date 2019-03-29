@@ -145,6 +145,10 @@ The tool support execution using a 'one-shot' mode where the key is supplied as 
 is supplied as a command line argument, or via stdin.  This allows you to store simple data, or possibly very large
 values, without having to roll it into a json document first.
 
+**WARNING** providing the secret value on the command line is a security risk since it will be visible in a process list,
+or stored in the command shell history. It is a more secure practice to use stdin file redirection for providing the value,
+similar to the second example below.
+
 #### Examples
 Providing the key and value on the command line
 ```text

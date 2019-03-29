@@ -137,11 +137,7 @@ func validateBackend() error {
 		return fmt.Errorf("backend %s is not valid, must be one of: %s", backendArg, strings.Join(backends, ", "))
 	}
 
-	if err := backendFactory(backends[i]); err != nil {
-		return err
-	}
-
-	return nil
+	return backendFactory(backends[i])
 }
 
 // KMS key is required, or a KMS key was explicitly passed with the ssm backend

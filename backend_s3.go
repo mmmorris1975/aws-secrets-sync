@@ -9,6 +9,7 @@ import (
 	"os"
 )
 
+// S3Backend is the type for storing a KMS encrypted item attribute in S3
 type S3Backend struct {
 	kmsRequired  bool
 	c            *s3manager.Uploader
@@ -17,6 +18,8 @@ type S3Backend struct {
 	storageClass string
 }
 
+// NewS3Backend creates a basic S3 SecretsBackender.  Note that the bucket name is not
+// defined with this call, see WithBucket() to set that before making any calls to Store()
 func NewS3Backend() *S3Backend {
 	cls := s3.StorageClassStandard
 	if v, ok := os.LookupEnv("S3_STORAGE_CLASS"); ok {
@@ -31,21 +34,30 @@ func NewS3Backend() *S3Backend {
 	}
 }
 
+// WithBucket sets the S3 bucket name to store the encrypted data. No validation is performed
+// to verify the bucket existence in this method
 func (b *S3Backend) WithBucket(bucket string) *S3Backend {
 	b.bucket = bucket
 	return b
 }
 
+// WithStorageClass sets the S3 storage class to store the encrypted data. No validation is performed
+// to verify the provided storage class name is valid in this method
 func (b *S3Backend) WithStorageClass(cls string) *S3Backend {
 	b.storageClass = cls
 	return b
 }
 
+// KmsRequired returns whether or not this backend requires a KMS key to encrypt the value when
+// doing a Store().  For S3 this will always be true since we need to explicitly provide the KMS
+// key information when storing an object in S3.
 func (b *S3Backend) KmsRequired() bool {
 	return b.kmsRequired
 }
 
-// max value size is only limited by S3 object limits
+// Store writes the value to the bucket using the provided key as the object's key in the bucket.
+// The size of the secret value to store in S3 is only limited by the S3 object size limit.  This is
+// currently 5TB
 func (b *S3Backend) Store(key string, value interface{}) error {
 	var r io.Reader
 	var err error

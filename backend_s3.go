@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"io"
+	"os"
 )
 
 type S3Backend struct {
@@ -17,11 +18,16 @@ type S3Backend struct {
 }
 
 func NewS3Backend() *S3Backend {
+	cls := s3.StorageClassStandard
+	if v, ok := os.LookupEnv("S3_STORAGE_CLASS"); ok {
+		cls = v
+	}
+
 	return &S3Backend{
 		kmsRequired:  true,
 		c:            s3manager.NewUploader(ses),
 		k:            kms.New(ses),
-		storageClass: s3.StorageClassStandard,
+		storageClass: cls,
 	}
 }
 

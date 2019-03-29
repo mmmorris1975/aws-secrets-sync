@@ -38,7 +38,7 @@ The tool behavior can also be modified using environment variables detailed in t
 | SECRETS_BACKEND  | The secret backend to use for managing the secret data. Equivalent to the `-s` option. |
 | KMS_KEY          | The KMS key ARN, ID, or alias to use to encrypt the secret data. Equivalent to the `-k` option. |
 | VERBOSE          | Print verbose output. Equivalent to the `-v` option. |
-| ONE_SHOT         | Use 'one-shot' mode storing the key and value from the command line. Equivalent to the `-o` option. |
+| ONE_SHOT         | Use ['one-shot'](#one-shot-mode) mode storing the key and value from the command line. Equivalent to the `-o` option. |
 | DYNAMODB_TABLE   | The DynamoDB table name to use for storing the secrets. Equivalent to the `-t` option.
 | S3_BUCKET        | The S3 bucket to use for storing the secrets. Equivalent to the `-b` option. |
 | S3_STORAGE_CLASS | Set the S3 storage class for the secrets.  Refer to S3 service documentation for valid values. |
@@ -141,7 +141,7 @@ TODO
 
 One-Shot Mode
 -------------
-The tool support execution using a ['one-shot'](#one-shot-mode) mode where the key is supplied as a command line argument, and the value
+The tool support execution using a 'one-shot' mode where the key is supplied as a command line argument, and the value
 is supplied as a command line argument, or via stdin.  This allows you to store simple data, or possibly very large
 values, without having to roll it into a json document first.
 

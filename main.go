@@ -56,7 +56,7 @@ func init() {
 	flag.StringVar(&backendArg, "s", os.Getenv("SECRETS_BACKEND"),
 		fmt.Sprintf("Secrets storage backend: %s", strings.Join(backends, ", ")))
 	flag.StringVar(&dynamoTableArg, "t", os.Getenv("DYNAMODB_TABLE"),
-		fmt.Sprintf("dynamodb table name, required only for %s backend, ignored by all others", dynamoSvc))
+		fmt.Sprintf("DynamoDB table name, required only for %s backend, ignored by all others", dynamoSvc))
 	flag.StringVar(&bucketArg, "b", os.Getenv("S3_BUCKET"),
 		fmt.Sprintf("S3 bucket name, required only for %s backend, ignored by all others", s3Svc))
 	flag.StringVar(&kmsKeyArg, "k", os.Getenv("KMS_KEY"),

@@ -21,11 +21,22 @@ Usage of ./secrets-sync:
   -s string
     	Secrets storage backend: dynamodb, s3, secretsmanager, ssm
   -t string
-    	dynamodb table name, required only for dynamodb backend, ignored by all others
+    	DynamoDB table name, required only for dynamodb backend, ignored by all others
   -v	Print verbose output
-  
-todo also describe env vars that can be used for configuration
 ```
+
+### Environment Variables
+The tool behavior can also be modified using environment variables detailed in the table below
+
+| Name             | Description |
+|------------------|-------------|
+| SECRETS_BACKEND  | The secret backend to use for managing the secret data. Equivalent to the `-s` option. |
+| KMS_KEY          | The KMS key ARN, ID, or alias to use to encrypt the secret data. Equivalent to the `-k` option. |
+| VERBOSE          | Print verbose output. Equivalent to the `-v` option. |
+| DYNAMODB_TABLE   | The DynamoDB table name to use for storing the secrets. Equivalent to the `-t` option.
+| S3_BUCKET        | The S3 bucket to use for storing the secrets. Equivalent to the `-b` option. |
+| S3_STORAGE_CLASS | Set the S3 storage class for the secrets.  Refer to S3 service documentation for valid values. |
+
 
 Backends
 --------
@@ -44,6 +55,10 @@ The maximum size of the secret value is 4096 bytes.
 ```text
 aws-secrets-sync -s ssm '{"/my/secret": "shhhh, this is a secret!"}'
 ```
+
+#### IAM Permissions Required
+TODO
+
 
 ### Secrets Manager
 This backend will upload the data to the Secrets Manager service, using the JSON key as the name of the secret.
@@ -69,6 +84,10 @@ The maximum size of the secret value is 7168 bytes.
 aws-secrets-sync -s secretsmanager '{"my/secret": "shhhh, this is a secret!"}'
 ```
 
+#### IAM Permissions Required
+TODO
+
+
 ### DynamoDB
 This backend will upload the data to DynamoDB, using the JSON key as the partition key value in the provided table.
 Specifying a KMS key to use for encrypting the secret data is required when using this backend, as DynamoDB has no native
@@ -84,6 +103,10 @@ in a single Encrypt call.
 ```text
 aws-secrets-sync -s dynamodb -t my-table -k alias/my/key '{"/my/secret": "shhhh, this is a secret!"}'
 ```
+
+#### IAM Permissions Required
+TODO
+
 
 ### S3
 This backend will upload the data to S3, using the JSON key as the object key name in the provided bucket.
@@ -105,6 +128,10 @@ Store large value from a file
 aws-secrets-sync -s s3 -b my-bucket -k alias/my/key < /path/to/my/data
 ```
 
+#### IAM Permissions Required
+TODO
+
+
 Docker example
 --------------
 An example to run the command using the docker container built from the supplied Dockerfile to store gzip'd input in the
@@ -116,7 +143,6 @@ docker run --rm -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOK
 
 Building
 --------
-
 The code for the tool can be built using the default target in the supplied Makefile, which will create a file called
 `aws-secrets-sync` in the current directory, appropriate for execution on the platform it was built on.
 

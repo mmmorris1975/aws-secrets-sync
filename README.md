@@ -1,5 +1,6 @@
 # aws-secrets-sync
 
+[![CircleCI](https://circleci.com/gh/mmmorris1975/aws-secrets-sync.svg?style=svg)](https://circleci.com/gh/mmmorris1975/aws-secrets-sync)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mmmorris1975/aws-secrets-sync)](https://goreportcard.com/report/github.com/mmmorris1975/aws-secrets-sync)
 
 The code and Dockerfile necessary to create a program or container which can upload values to AWS services which can store

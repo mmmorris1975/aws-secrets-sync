@@ -141,7 +141,7 @@ TODO
 
 One-Shot Mode
 -------------
-The tool support execution using a 'one-shot' mode where the key is supplied as a command line argument, and the value
+The tool support execution using a ['one-shot'](#one-shot-mode) mode where the key is supplied as a command line argument, and the value
 is supplied as a command line argument, or via stdin.  This allows you to store simple data, or possibly very large
 values, without having to roll it into a json document first.
 

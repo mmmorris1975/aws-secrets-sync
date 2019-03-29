@@ -10,7 +10,7 @@ func newMockBackend() *mockBackend {
 	return &mockBackend{kmsRequired: false}
 }
 
-// KmsRequired will always return true for the mock backend
+// KmsRequired will always return false for the mock backend
 func (b *mockBackend) KmsRequired() bool {
 	return b.kmsRequired
 }

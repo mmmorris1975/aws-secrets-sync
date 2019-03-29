@@ -155,10 +155,13 @@ Providing the key and value on the command line
 aws-secrets-sync -s ssm -o my-key my-value
 ```
 
-Providing the key on the command line and providing the value on stdin.  In this case uploading a large file to S3
+Providing the key on the command line and providing the value on stdin (in this case uploading a large file to S3).
 ```text
 aws-secrets-sync -s s3 -b my-bucket -k alias/my-kms-key -o my-key < /path/to/a/large_file
 ```
+This method will not work with the `ssm` backend since it only supports explicit string values, and can not determine if
+the redirected file only contains string values.  When using this method with the `secretsmanager` backend, it will store
+the data as a SecretsBinary type, for the same reason as the ssm backend.
 
 
 Docker example

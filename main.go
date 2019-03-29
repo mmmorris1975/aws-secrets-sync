@@ -246,6 +246,11 @@ func readBinary(value interface{}) (io.Reader, error) {
 		return nil, fmt.Errorf("nil value")
 	}
 
+	switch t := value.(type) {
+	case io.Reader:
+		return t, nil
+	}
+
 	b := bytes.NewBuffer(make([]byte, 0, 4096))
 	if _, err := fmt.Fprint(b, value); err != nil {
 		return nil, err

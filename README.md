@@ -173,6 +173,12 @@ docker run --rm -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOK
  -s ssm $(echo raw_json | gzip -c | base64 -i -)
 ```
 
+
+Terraform usage
+---------------
+TODO
+
+
 Building
 --------
 The code for the tool can be built using the default target in the supplied Makefile, which will create a file called

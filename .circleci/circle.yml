@@ -1,0 +1,18 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: "circleci/golang:1.12"
+
+    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    steps:
+      - checkout
+      - run: mkdir -p build
+      - run: go get -v -t -d ./...
+      - run: go vet -tests=false ./...
+      - run: go test -v ./...
+      - run: go build -v -ldflags '-X main.Version=0.0.1-0-circle' -o build/aws-secrets-sync
+
+      #- persist_to_workspace:
+      #    root: build
+      #    paths: aws-secrets-sync

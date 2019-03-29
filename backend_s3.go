@@ -78,21 +78,3 @@ func (b *S3Backend) Store(key string, value interface{}) error {
 
 	return nil
 }
-
-// max size of value is 4096 bytes due to max size of KMS encrypt operation input
-//func (b *S3Backend) encrypt(value interface{}) (io.Reader, error) {
-//	data, err := readBinary(value)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	i := kms.EncryptInput{KeyId: aws.String(keyArn.String()), Plaintext: data}
-//	o, err := b.k.Encrypt(&i)
-//	if err != nil {
-//		return nil, err
-//	}
-//	log.Debugf("successfully encrypted data")
-//
-//	// Encrypt API call returns bytes, unlike the dynamodb backend, we'll store the bytes directly in S3
-//	return bytes.NewReader(o.CiphertextBlob), nil
-//}

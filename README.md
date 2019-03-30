@@ -42,7 +42,7 @@ The tool behavior can also be modified using environment variables detailed in t
 | ONE_SHOT         | Use ['one-shot'](#one-shot-mode) mode storing the key and value from the command line. Equivalent to the `-o` option. |
 | DYNAMODB_TABLE   | The DynamoDB table name to use for storing the secrets. Equivalent to the `-t` option.
 | S3_BUCKET        | The S3 bucket to use for storing the secrets. Equivalent to the `-b` option. |
-| S3_STORAGE_CLASS | Set the S3 storage class for the secrets.  Refer to S3 service documentation for valid values. |
+| S3_STORAGE_CLASS | Set the S3 storage class for the secrets, defaults to `STANDARD`.  Refer to the [S3 service documentation](https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html#sc-compare) for valid values. |
 
 
 Backends
@@ -208,7 +208,7 @@ The policy above only grants permissions to store the data across the various ba
 to read or decrypt the stored values.  An example policy for retrieving the secrets can be found
 [here](resources/iam_policy_reader.txt), and will require the same modifications as the other policy to be effective.
 One thing to keep in mind is that the dynamodb service does not automatically decrypt the item value, like the rest of
-the back ends do, so the GetItem call will retrieved the base64 encoded encrypted data, and it will be up to the caller
+the back ends do, so the GetItem call will retrieve the base64 encoded encrypted data, and it will be up to the caller
 to decrypt the value using the kms:Decrypt operation.
 
 For the pedants out there, yes, the policies could be condensed to a single statement, however the examples clearly

@@ -35,7 +35,7 @@ resource "null_resource" "sync" {
 
   provisioner "local-exec" {
     environment {
-      SECRET_BACKEND = "${var.secrets_backend}"
+      SECRETS_BACKEND = "${var.secrets_backend}"
       KMS_KEY = "${var.kms_key}"
     }
 

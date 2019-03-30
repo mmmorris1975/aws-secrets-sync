@@ -170,7 +170,7 @@ describe 'tests using command line args' do
 
     describe command ('aws-secrets-sync -s secretsmanager eyIvbm9hY2Nlc3MvYjY0IjogInRlc3QifQo=') do
       its(:exit_status) { should eq 1 }
-      its(:stderr) { should match /ERROR error storing secret: ResourceNotFoundException: / }
+      its(:stderr) { should match /ERROR error storing secret: AccessDeniedException: / }
     end
   end
 end

@@ -64,7 +64,9 @@ aws-secrets-sync -s ssm '{"/my/secret": "shhhh, this is a secret!"}'
 ```
 
 #### IAM Permissions Required
-TODO
+ssm:PutParameter  
+kms:DescribeKey  
+kms:Encrypt
 
 
 ### Secrets Manager
@@ -92,7 +94,9 @@ aws-secrets-sync -s secretsmanager '{"my/secret": "shhhh, this is a secret!"}'
 ```
 
 #### IAM Permissions Required
-TODO
+secretsmanager:PutSecretValue  
+kms:DescribeKey  
+kms:Encrypt
 
 
 ### DynamoDB
@@ -113,7 +117,10 @@ aws-secrets-sync -s dynamodb -t my-table -k alias/my/key '{"/my/secret": "shhhh,
 ```
 
 #### IAM Permissions Required
-TODO
+dynamodb:DescribeTable  
+dynamodb:PutItem  
+kms:DescribeKey  
+kms:Encrypt
 
 
 ### S3
@@ -137,7 +144,11 @@ aws-secrets-sync -s s3 -b my-bucket -k alias/my/key < /path/to/my/data
 ```
 
 #### IAM Permissions Required
-TODO
+s3:GetObject  
+s3:PutObject  
+kms:DescribeKey  
+kms:Encrypt  
+kms:GenerateDataKey
 
 
 One-Shot Mode
@@ -160,9 +171,9 @@ Providing the key on the command line and providing the value on stdin (in this 
 ```text
 aws-secrets-sync -s s3 -b my-bucket -k alias/my-kms-key -o my-key < /path/to/a/large_file
 ```
-This method will not work with the `ssm` backend since it only supports explicit string values, and can not determine if
-the redirected file only contains string values.  When using this method with the `secretsmanager` backend, it will store
-the data as a SecretsBinary type, for the same reason as the ssm backend.
+The stdin redirect method will not work with the `ssm` backend since it only supports explicit string values, and can not
+determine if the redirected file only contains string data.  When using this method with the `secretsmanager` backend,
+it will store the data as a SecretsBinary type, for the same reason as the ssm backend.
 
 
 Docker example
@@ -179,6 +190,17 @@ Terraform usage
 ---------------
 TODO
 
+
+IAM sample policy
+-----------------
+A sample policy detailing the permissions to set for accessing all backends supported by the tool can be found
+[here](resources/iam_policy.txt).  To make it relevant for your setup, you may want to replace the `*` values for the
+ARN region with a specific region.  You will be required to update the AWS account number value in the resource ARNs with
+the appropriate value for your setup.  KMS key ID(s), DynamoDB table name(s), S3 bucket name(s) and object path(s), and
+Secrets Manager and SSM paths will all need to be updated to reflect your particular situation.
+
+For the pedants out there, yes, the policy could be condensed to a single statement, however the example clearly delineates
+the permissions needed across the various AWS services.
 
 Building
 --------

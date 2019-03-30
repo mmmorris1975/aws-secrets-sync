@@ -251,7 +251,7 @@ describe 'tests using environment variables' do
 
     describe command ('aws-secrets-sync eyIvbm9hY2Nlc3MvYjY0IjogInRlc3QifQo=') do
       its(:exit_status) { should eq 1 }
-      its(:stderr) { should match /ERROR error storing secret: ResourceNotFoundException: / }
+      its(:stderr) { should match /ERROR error storing secret: AccessDeniedException: / }
     end
   end
 end

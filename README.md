@@ -3,16 +3,16 @@
 [![CircleCI](https://circleci.com/gh/mmmorris1975/aws-secrets-sync.svg?style=svg)](https://circleci.com/gh/mmmorris1975/aws-secrets-sync)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mmmorris1975/aws-secrets-sync)](https://goreportcard.com/report/github.com/mmmorris1975/aws-secrets-sync)
 
-The code and Dockerfile necessary to create a program or container which can upload values to AWS services which can store
+The code and Dockerfile necessary to create a program or container which can upload values to AWS services that can store
 sensitive data.  This allows sensitive data to be synchronized to AWS for use with tools like Terraform without the need
 to store the sensitive data in the Terraform state file.
 
 The program works by taking a value passed in as the 1st argument to the command, or the system standard input, which is
-expected to be a json map of keys and values to upload to the service, and calling the appropriate AWS service backend
+expected to be a json map of keys and values to upload to the service.  It then calls the appropriate AWS service backend
 API to store the value. The preferred input format is a base64 encoded, gzip compressed string of the json values to
 upload.  Other supported formats are a base64 encoded string of json values (not compressed), or just the raw json value
-directly; however using these types of input data may cause warning from the program, and are less preferred than the
-base64, gzip format for the values.
+directly.
+
 
 Usage
 -----
@@ -36,10 +36,10 @@ The tool behavior can also be modified using environment variables detailed in t
 
 | Name             | Description |
 |------------------|-------------|
-| SECRETS_BACKEND  | The secret backend to use for managing the secret data. Equivalent to the `-s` option. |
-| KMS_KEY          | The KMS key ARN, ID, or alias to use to encrypt the secret data. Equivalent to the `-k` option. |
+| SECRETS_BACKEND  | The secrets backend to use for managing the secret data. Equivalent to the `-s` option. |
+| KMS_KEY          | The KMS key ARN, ID, or alias to use for encrypting the secret data. Equivalent to the `-k` option. |
 | VERBOSE          | Print verbose output. Equivalent to the `-v` option. |
-| ONE_SHOT         | Use ['one-shot'](#one-shot-mode) mode storing the key and value from the command line. Equivalent to the `-o` option. |
+| ONE_SHOT         | Use ['one-shot'](#one-shot-mode) mode, storing the key and value from the command line. Equivalent to the `-o` option. |
 | DYNAMODB_TABLE   | The DynamoDB table name to use for storing the secrets. Equivalent to the `-t` option.
 | S3_BUCKET        | The S3 bucket to use for storing the secrets. Equivalent to the `-b` option. |
 | S3_STORAGE_CLASS | Set the S3 storage class for the secrets, defaults to `STANDARD`.  Refer to the [S3 service documentation](https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html#sc-compare) for valid values. |
@@ -51,7 +51,7 @@ Backends
 ### SSM
 This backend will upload the data the the SSM Parameter Store service as Secure String types using the paths defined in
 the JSON keys.  If the using "pathed" or namespaced key names, AWS expects that the path values are separated by the `/`
-character, and that the key name value starts with a `/`
+character, and that the parameter name value starts with a `/`
 
 A KMS key is not required to be supplied when using this backend.  If a key is not provided, the service default key will
 be used to encrypt the value.  The service default KMS key alias is `alias/aws/ssm`.
@@ -71,7 +71,7 @@ kms:Encrypt
 
 ### Secrets Manager
 This backend will upload the data to the Secrets Manager service, using the JSON key as the name of the secret.
-If the value data is a string, then the data will be stored as a SecretString type, otherwise it will be stored as a
+If the value is a string, then the data will be stored as a SecretString type, otherwise it will be stored as a
 SecretBinary type.  If the using "pathed" or namespaced key names, AWS expects that the path values are separated by the `/`
 character.  It is a preferred practice that you do **not** prefix the key path with a `/`, otherwise it will require the
 use of a '//' when referencing the parameter name if using the SSM Parameter Store -\> Secrets Manager magic parameter
@@ -124,7 +124,7 @@ kms:Encrypt
 
 
 ### S3
-This backend will upload the data to S3, using the JSON key as the object key name in the provided bucket.
+This backend will upload the data to S3, using the JSON key as the S3 object key name in the provided bucket.
 Specifying a KMS key to use for encrypting the secret data is required when using this backend to correctly upload the
 object to S3 with encryption.  S3 transparently encrypts and decrypts the object data, provided that the API keys have
 the necessary Get/Put Object permissions, and Encrypt and Decrypt permissions for the KMS key in use.
@@ -153,7 +153,7 @@ kms:GenerateDataKey
 
 One-Shot Mode
 -------------
-The tool support execution using a 'one-shot' mode where the key is supplied as a command line argument, and the value
+The tool supports execution using a 'one-shot' mode where the key is supplied as a command line argument, and the value
 is supplied as a command line argument, or via stdin.  This allows you to store simple data, or possibly very large
 values, without having to roll it into a json document first.
 
@@ -209,7 +209,7 @@ to read or decrypt the stored values.  An example policy for retrieving the secr
 [here](resources/iam_policy_reader.txt), and will require the same modifications as the other policy to be effective.
 One thing to keep in mind is that the dynamodb service does not automatically decrypt the item value, like the rest of
 the back ends do, so the GetItem call will retrieve the base64 encoded encrypted data, and it will be up to the caller
-to decrypt the value using the kms:Decrypt operation.
+to "un-base64" the value, then decrypt using the kms:Decrypt operation.
 
 For the pedants out there, yes, the policies could be condensed to a single statement, however the examples clearly
 delineate the permissions needed across the various AWS services.
@@ -221,5 +221,5 @@ The code for the tool can be built using the default target in the supplied Make
 `aws-secrets-sync` in the current directory, appropriate for execution on the platform it was built on.
 
 A local docker container can be built using the `docker` target in the Makefile.  This will compile the tool for Linux,
-and use the Dockerfile in the repo to create an images with the name `aws-secrets-sync`, which will be tagged according to
+and use the Dockerfile in the repo to create an image with the name `aws-secrets-sync`, which will be tagged according to
 the most recent tag and commit as determined by running `git describe --tags`

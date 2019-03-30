@@ -20,7 +20,7 @@ variable "region" { default = "us-east-1" }
 
 variable "kms_key" {
   description = "The KMS key used to encrypt the secrets, if not specified, use the service default key"
-  default = "alias/ssm"
+  default = "alias/aws/ssm"
 }
 
 provider "aws" {

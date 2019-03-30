@@ -35,9 +35,10 @@ func (b *ParameterStoreBackend) Store(key string, value interface{}) error {
 	switch t := value.(type) {
 	case string:
 		i := ssm.PutParameterInput{
-			Name:  aws.String(key),
-			Value: aws.String(t),
-			Type:  aws.String(ssm.ParameterTypeSecureString),
+			Name:      aws.String(key),
+			Value:     aws.String(t),
+			Type:      aws.String(ssm.ParameterTypeSecureString),
+			Overwrite: aws.Bool(true),
 		}
 
 		if len(kmsKeyArg) > 0 {

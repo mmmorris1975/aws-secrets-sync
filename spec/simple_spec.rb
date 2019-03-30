@@ -9,3 +9,8 @@ describe command ('aws-secrets-sync -V') do
   its(:exit_status) { should eq 1 }
   its(:stderr) { should match /VERSION: \d+\.\d+\.\d+(-\d+-\w+)?/ }
 end
+
+describe command ('aws-secrets-sync') do
+  its(:exit_status) { should eq 1 }
+  its(:stderr) { should match /FATAL backend  is not valid, must be one of: / }
+end

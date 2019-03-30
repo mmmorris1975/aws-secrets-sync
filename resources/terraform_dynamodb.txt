@@ -1,0 +1,49 @@
+# sensitive variables like these should be stored in a separate file from the
+# other tf variables and resources, and encrypted with a tool like git-crypt
+# TF variables are not stored in the state file
+variable "secrets" {
+  type = "map"
+
+  default = {
+    "secret/key1" = "value1"
+    "secret/key2" = "value2"
+  }
+}
+
+variable "secrets_backend" { default = "dynamodb" }
+variable "table_name" { default = "my-secrets" }
+variable "kms_key" { default = "alias/my-key" }
+variable "region" { default = "us-east-1" }
+
+provider "aws" {
+  region  = "${var.region}"
+}
+
+resource "aws_dynamodb_table" "t" {
+  name     = "${var.table_name}"
+  hash_key = "pk"
+  write_capacity = 1
+  read_capacity  = 1
+
+  attribute {
+    name = "pk"
+    type = "S"
+  }
+}
+
+# This is what sets the secret value in the AWS resource
+resource "null_resource" "sync" {
+  triggers = {
+    secrets = "${base64sha512(var.secrets)}"
+  }
+
+  provisioner "local-exec" {
+    environment {
+      SECRET_BACKEND = "${var.secrets_backend}"
+      DYNAMODB_TABLE = "${var.table_name}"
+      KMS_KEY = "${var.kms_key}"
+    }
+
+    command = "/path/to/aws-secrets-sync ${base64gzip(jsonencode(var.secrets))}"
+  }
+}

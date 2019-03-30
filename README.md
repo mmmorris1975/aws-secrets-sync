@@ -188,7 +188,12 @@ docker run --rm -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOK
 
 Terraform usage
 ---------------
-TODO
+Examples for each of the backend can be found at the following locations:
+
+[dynamodb](resources/terraform_dynamodb.txt)  
+[s3](resources/terraform_s3.txt)  
+[secretsmanager](resources/terraform_secrets_manager.txt)  
+[ssm](resources/terraform_ssm.txt)
 
 
 IAM sample policy

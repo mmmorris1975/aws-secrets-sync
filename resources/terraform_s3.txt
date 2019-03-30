@@ -1,0 +1,52 @@
+# sensitive variables like these should be stored in a separate file from the
+# other tf variables and resources, and encrypted with a tool like git-crypt
+# TF variables are not stored in the state file
+variable "secrets" {
+  type = "map"
+
+  default = {
+    "secret/key1" = "value1"
+    "secret/key2" = "value2"
+  }
+}
+
+variable "secrets_backend" { default = "s3" }
+variable "bucket_name" { default = "my-bucket" }
+variable "kms_key" { default = "alias/my-key" }
+variable "region" { default = "us-east-1" }
+
+provider "aws" {
+  region  = "${var.region}"
+}
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_s3_bucket" "b" {
+  bucket = "${format("%s-%s", var.bucket_name, data.aws_caller_identity.current.account_id)}"
+
+  # This is different from the encryption aws-secrets-sync does
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
+}
+
+# This is what sets the secret value in the AWS resource
+resource "null_resource" "sync" {
+  triggers = {
+    secrets = "${base64sha512(var.secrets)}"
+  }
+
+  provisioner "local-exec" {
+    environment {
+      SECRET_BACKEND = "${var.secrets_backend}"
+      S3_BUCKET = "${var.bucket_name}"
+      KMS_KEY = "${var.kms_key}"
+    }
+
+    command = "/path/to/aws-secrets-sync ${base64gzip(jsonencode(var.secrets))}"
+  }
+}

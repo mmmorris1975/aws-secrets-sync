@@ -9,6 +9,8 @@ GOARCH ?= $(shell go env GOARCH)
 $(EXE): go.mod *.go
 	go build -v -ldflags '-X main.Version=$(VER)' -o $@
 
+release: $(EXE) darwin windows linux
+
 darwin linux:
 	GOOS=$@ go build -ldflags '-X main.Version=$(VER)' -o $(EXE)-$(VER)-$@-$(GOARCH)
 

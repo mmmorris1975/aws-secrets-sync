@@ -199,8 +199,16 @@ ARN region with a specific region.  You will be required to update the AWS accou
 the appropriate value for your setup.  KMS key ID(s), DynamoDB table name(s), S3 bucket name(s) and object path(s), and
 Secrets Manager and SSM paths will all need to be updated to reflect your particular situation.
 
-For the pedants out there, yes, the policy could be condensed to a single statement, however the example clearly delineates
-the permissions needed across the various AWS services.
+The policy above only grants permissions to store the data across the various backends, and does not provide the authority
+to read or decrypt the stored values.  An example policy for retrieving the secrets can be found
+[here](resources/iam_policy_reader.txt), and will require the same modifications as the other policy to be effective.
+One thing to keep in mind is that the dynamodb service does not automatically decrypt the item value, like the rest of
+the back ends do, so the GetItem call will retrieved the base64 encoded encrypted data, and it will be up to the caller
+to decrypt the value using the kms:Decrypt operation.
+
+For the pedants out there, yes, the policies could be condensed to a single statement, however the examples clearly
+delineate the permissions needed across the various AWS services.
+
 
 Building
 --------

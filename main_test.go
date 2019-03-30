@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"math"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -13,56 +14,80 @@ import (
 
 func TestCheckBoolEnv(t *testing.T) {
 	t.Run("string 1", func(t *testing.T) {
-		if !checkBoolEnv("1") {
+		os.Setenv("MY_VAR", "1")
+		defer os.Unsetenv("MY_VAR")
+
+		if !checkBoolEnv("MY_VAR") {
 			t.Error("unexpected false")
 			return
 		}
 	})
 
 	t.Run("string 0", func(t *testing.T) {
-		if checkBoolEnv("0") {
+		os.Setenv("MY_VAR", "0")
+		defer os.Unsetenv("MY_VAR")
+
+		if checkBoolEnv("MY_VAR") {
 			t.Error("unexpected true")
 			return
 		}
 	})
 
 	t.Run("t", func(t *testing.T) {
-		if !checkBoolEnv("t") {
+		os.Setenv("MY_VAR", "t")
+		defer os.Unsetenv("MY_VAR")
+
+		if !checkBoolEnv("MY_VAR") {
 			t.Error("unexpected false")
 			return
 		}
 	})
 
 	t.Run("T", func(t *testing.T) {
-		if !checkBoolEnv("T") {
+		os.Setenv("MY_VAR", "T")
+		defer os.Unsetenv("MY_VAR")
+
+		if !checkBoolEnv("MY_VAR") {
 			t.Error("unexpected false")
 			return
 		}
 	})
 
 	t.Run("TRUE", func(t *testing.T) {
-		if !checkBoolEnv("TRUE") {
+		os.Setenv("MY_VAR", "TRUE")
+		defer os.Unsetenv("MY_VAR")
+
+		if !checkBoolEnv("MY_VAR") {
 			t.Error("unexpected false")
 			return
 		}
 	})
 
 	t.Run("true", func(t *testing.T) {
-		if !checkBoolEnv("true") {
+		os.Setenv("MY_VAR", "true")
+		defer os.Unsetenv("MY_VAR")
+
+		if !checkBoolEnv("MY_VAR") {
 			t.Error("unexpected false")
 			return
 		}
 	})
 
 	t.Run("True", func(t *testing.T) {
-		if !checkBoolEnv("True") {
+		os.Setenv("MY_VAR", "True")
+		defer os.Unsetenv("MY_VAR")
+
+		if !checkBoolEnv("MY_VAR") {
 			t.Error("unexpected false")
 			return
 		}
 	})
 
 	t.Run("random string", func(t *testing.T) {
-		if checkBoolEnv("alwet") {
+		os.Setenv("MY_VAR", "alwet")
+		defer os.Unsetenv("MY_VAR")
+
+		if checkBoolEnv("MY_VAR") {
 			t.Error("unexpected true")
 			return
 		}

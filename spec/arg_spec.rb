@@ -168,9 +168,9 @@ describe 'tests using command line args' do
       its(:stderr) { should match /ERROR error decoding json: / }
     end
 
-    describe command ('aws-secrets-sync -s ssm eyIvbm9hY2Nlc3MvYjY0IjogInRlc3QifQo=') do
+    describe command ('aws-secrets-sync -s secretsmanager eyIvbm9hY2Nlc3MvYjY0IjogInRlc3QifQo=') do
       its(:exit_status) { should eq 1 }
-      its(:stderr) { should match /ERROR error storing secret: AccessDeniedException: / }
+      its(:stderr) { should match /ERROR error storing secret: ResourceNotFoundException: / }
     end
   end
 end

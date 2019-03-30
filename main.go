@@ -99,6 +99,7 @@ func main() {
 
 	errCnt := 0
 	if oneShotArg {
+		log.Debug("using one-shot mode")
 		var v interface{}
 
 		if len(flag.Args()) > 1 {
@@ -111,6 +112,7 @@ func main() {
 			log.Fatalf("error storing secret: %v", err)
 		}
 	} else {
+		log.Debug("using json mode")
 		var in interface{}
 
 		if len(flag.Arg(0)) > 0 {
@@ -173,10 +175,13 @@ func jsonHandler(in interface{}) int {
 
 // truth-y values are 1, t, T, TRUE, true, True; everything else is false
 func checkBoolEnv(v string) bool {
-	b, err := strconv.ParseBool(v)
+	log.Debugf("checkBoolEnv input: %s", v)
+	b, err := strconv.ParseBool(os.Getenv(v))
 	if err != nil {
+		log.Debugf("ParseBool error: %v", err)
 		b = false
 	}
+	log.Debugf("checkBoolEnv returning: %v", b)
 	return b
 }
 

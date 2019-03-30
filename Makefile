@@ -24,3 +24,9 @@ dist-clean: clean
 
 docker: clean linux Dockerfile
 	docker build . -t $(EXE):$(VER)
+
+test: $(EXE)
+	mkdir -p build
+	mv $(EXE) build
+	go test -v ./...
+	bundle install

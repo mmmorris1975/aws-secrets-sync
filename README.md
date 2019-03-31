@@ -49,7 +49,7 @@ Backends
 --------
 
 ### SSM
-This backend will upload the data the the SSM Parameter Store service as Secure String types using the paths defined in
+This backend will upload the data to the SSM Parameter Store service as Secure String types using the paths defined in
 the JSON keys.  If the using "pathed" or namespaced key names, AWS expects that the path values are separated by the `/`
 character, and that the parameter name value starts with a `/`
 
@@ -81,7 +81,7 @@ more info)
 The Secrets Manager service implements 2 distinct API methods, one to create the Secret resource (which contains metadata
 about the secret, including the Secret name and KMS key to encrypt with), and the other to define the Secret's value.
 This tool assumes that the Secret resource is already defined, and will not create new ones if it finds a key in the
-supplied JSON data that does not exist in the AWS service.  This means it is important that the name of the Secret in AWS
+supplied JSON data that does not exist in the AWS service.  Therefore it is important that the name of the Secret in AWS
 and the name of the key in the JSON match, in order to update the value.  Since the KMS key is also defined as part of the
 Secret resource, it is not necessary to specify a KMS key when using this tool.  (It will be rightly ignored if you do
 supply one, however)
@@ -154,7 +154,7 @@ kms:GenerateDataKey
 One-Shot Mode
 -------------
 The tool supports execution using a 'one-shot' mode where the key is supplied as a command line argument, and the value
-is supplied as a command line argument, or via stdin.  This allows you to store simple data, or possibly very large
+is supplied as either a command line argument, or via stdin.  This allows you to store simple data, or possibly very large
 values, without having to roll it into a json document first.
 
 **WARNING** providing the secret value on the command line is a security risk since it will be visible in a process list,
@@ -198,7 +198,7 @@ Examples for each of the backend can be found at the following locations:
 
 IAM sample policy
 -----------------
-A sample policy detailing the permissions to set for accessing all backends supported by the tool can be found
+A sample policy detailing the permissions needed to access all of the backends supported by the tool can be found
 [here](resources/iam_policy.txt).  To make it relevant for your setup, you may want to replace the `*` values for the
 ARN region with a specific region.  You will be required to update the AWS account number value in the resource ARNs with
 the appropriate value for your setup.  KMS key ID(s), DynamoDB table name(s), S3 bucket name(s) and object path(s), and

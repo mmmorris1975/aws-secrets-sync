@@ -32,6 +32,11 @@ describe 'tests using command line args' do
       its(:exit_status) { should eq 1 }
       its(:stderr) { should match /ERROR error storing secret: AccessDeniedException: / }
     end
+
+    describe command ('aws-secrets-sync -s ssm H4sIALYjolwAA6tW0k/OLErOSU3O1M8qzs9TslKoVvI1BFPZIEqpzFBJR0Ep2wjIjlYqMwJxyoyVYmuBtI8hWDAVpKJaKdUIrNxEqTa2tpYLAM5lGqxZAAAA') do
+      its(:exit_status) { should eq 0 }
+      its(:stderr) { should match /INFO updated secret \/circleci\/json/ }
+    end
   end
 
   describe 'for the ssm backend using custom key' do
@@ -53,6 +58,11 @@ describe 'tests using command line args' do
     describe command ('aws-secrets-sync -s ssm -k alias/circleci -o /circleci/one-shot boom') do
       its(:exit_status) { should eq 0 }
       its(:stderr) { should match /INFO updated secret \/circleci\/one-shot/ }
+    end
+
+    describe command ('aws-secrets-sync -s ssm -k alias/circleci H4sIALYjolwAA6tW0k/OLErOSU3O1M8qzs9TslKoVvI1BFPZIEqpzFBJR0Ep2wjIjlYqMwJxyoyVYmuBtI8hWDAVpKJaKdUIrNxEqTa2tpYLAM5lGqxZAAAA') do
+      its(:exit_status) { should eq 0 }
+      its(:stderr) { should match /INFO updated secret \/circleci\/json/ }
     end
   end
 
@@ -96,6 +106,11 @@ describe 'tests using command line args' do
       its(:exit_status) { should eq 1 }
       its(:stderr) { should match /FATAL error describing dynamodb table: AccessDeniedException: / }
     end
+
+    describe command ('aws-secrets-sync -s dynamodb -t test-table -k alias/circleci H4sIALYjolwAA6tW0k/OLErOSU3O1M8qzs9TslKoVvI1BFPZIEqpzFBJR0Ep2wjIjlYqMwJxyoyVYmuBtI8hWDAVpKJaKdUIrNxEqTa2tpYLAM5lGqxZAAAA') do
+      its(:exit_status) { should eq 0 }
+      its(:stderr) { should match /INFO updated secret \/circleci\/json/ }
+    end
   end
 
   describe 'for the s3 backend' do
@@ -138,6 +153,11 @@ describe 'tests using command line args' do
       its(:exit_status) { should eq 1 }
       its(:stderr) { should match /ERROR error storing secret: AccessDenied: / }
     end
+
+    describe command ('aws-secrets-sync -s s3 -b trash-686784119290 -k alias/circleci H4sIALYjolwAA6tW0k/OLErOSU3O1M8qzs9TslKoVvI1BFPZIEqpzFBJR0Ep2wjIjlYqMwJxyoyVYmuBtI8hWDAVpKJaKdUIrNxEqTa2tpYLAM5lGqxZAAAA') do
+      its(:exit_status) { should eq 0 }
+      its(:stderr) { should match /INFO updated secret \/circleci\/json/ }
+    end
   end
 
   describe 'for the secrets manager backend' do
@@ -171,6 +191,11 @@ describe 'tests using command line args' do
     describe command ('aws-secrets-sync -s secretsmanager eyIvbm9hY2Nlc3MvYjY0IjogInRlc3QifQo=') do
       its(:exit_status) { should eq 1 }
       its(:stderr) { should match /ERROR error storing secret: AccessDeniedException: / }
+    end
+
+    describe command ('aws-secrets-sync -s secretsmanager H4sIALYjolwAA6tW0k/OLErOSU3O1M8qzs9TslKoVvI1BFPZIEqpzFBJR0Ep2wjIjlYqMwJxyoyVYmuBtI8hWDAVpKJaKdUIrNxEqTa2tpYLAM5lGqxZAAAA') do
+      its(:exit_status) { should eq 0 }
+      its(:stderr) { should match /INFO updated secret \/circleci\/json/ }
     end
   end
 end

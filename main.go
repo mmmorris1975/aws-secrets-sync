@@ -161,7 +161,22 @@ func jsonHandler(in interface{}) int {
 		}
 
 		for k, v := range m {
-			if err := sb.Store(k, v); err != nil {
+			var err error
+
+			switch t := v.(type) {
+			case string:
+				// plain string, just store it
+				err = sb.Store(k, t)
+			default:
+				// not a string, see if it was some nested json which we can re-encode and store
+				jv, err := json.Marshal(t)
+				if err != nil {
+					break
+				}
+				err = sb.Store(k, string(jv))
+			}
+
+			if err != nil {
 				log.Errorf("error storing secret: %v", err)
 				errs++
 			} else {

@@ -398,4 +398,12 @@ func TestJsonHandler(t *testing.T) {
 			return
 		}
 	})
+
+	t.Run("nested json", func(t *testing.T) {
+		j := `{"M1": {"k1": "v1", "k2": ["v2", "v3"]}, "L1": ["e1", {"e2": "v4"}]}`
+		if errs := jsonHandler(j); errs > 0 {
+			t.Error("got an error when storing a known good value")
+			return
+		}
+	})
 }

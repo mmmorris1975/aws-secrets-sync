@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
+	"reflect"
 )
 
 // ParameterStoreBackend is the type for storing a KMS encrypted item attribute in SSM Parameter Store
@@ -51,8 +52,10 @@ func (b *ParameterStoreBackend) Store(key string, value interface{}) error {
 			return err
 		}
 		log.Debugf("set parameter %s, version %d", key, *o.Version)
+	case nil:
+		return fmt.Errorf("nil value detected")
 	default:
-		return fmt.Errorf("strings are the only supported parameter value for this backend")
+		return fmt.Errorf("%s is not a supported parameter value, strings only", reflect.TypeOf(value).Name())
 	}
 	return nil
 }

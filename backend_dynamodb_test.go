@@ -53,7 +53,7 @@ func (m *mockDynamoDBClient) PutItem(input *dynamodb.PutItemInput) (*dynamodb.Pu
 			return nil, fmt.Errorf("empty key")
 		}
 
-		if len(*v.S) < 1 {
+		if v.S != nil && len(*v.S) < 1 {
 			return nil, fmt.Errorf("empty value")
 		}
 	}

@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/aws/aws-sdk-go/service/kms/kmsiface"
-	"io/ioutil"
 )
 
 // DynamoDbBackend is the type for storing a KMS encrypted item attribute in DynamoDB
@@ -76,7 +77,7 @@ func (b *DynamoDbBackend) Store(key string, value interface{}) error {
 		Item: map[string]*dynamodb.AttributeValue{
 			b.pk:        {S: aws.String(key)},
 			"value":     {S: aws.String(data)},
-			"encrypted": {S: aws.String("true")},
+			"encrypted": {BOOL: aws.Bool(true)},
 		},
 	}
 

@@ -25,3 +25,6 @@ vendor/
 build/
 
 .terraform/
+
+# Avoid commiting the binary into the repo after "go" or "docker" build  (via the Makefile)
+aws-secrets-sync* 

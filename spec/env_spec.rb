@@ -99,6 +99,27 @@ describe 'tests using environment variables' do
     end
   end
 
+  describe 'for the ssm backend using advanced parameters' do
+    before(:each) do
+      ENV['SECRETS_BACKEND']='ssm'
+      ENV['SSM_ADVANCED']='1'
+      ENV['KMS_KEY']='alias/circleci'
+    end
+
+    after(:each) do
+      ENV.delete('SECRETS_BACKEND')
+      ENV.delete('SSM_ADVANCED')
+      ENV.delete('KMS_KEY')
+    end
+
+    if ENV.fetch("CIRCLECI", false).to_s === "false"; then
+      describe command ('aws-secrets-sync \'{"/circleci/advanced-text-env": "item"}\'') do
+        its(:exit_status) { should eq 0 }
+        its(:stderr) { should match /INFO updated secret \/circleci\/advanced-text-env/ }
+      end
+    end
+  end
+
   describe 'for the dynamodb backend' do
 
     before(:each) do

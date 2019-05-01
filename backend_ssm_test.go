@@ -119,3 +119,21 @@ func TestParameterStoreBackend_StoreWithKey(t *testing.T) {
 		}
 	})
 }
+
+func TestParameterStoreBackend_WithAdvanced(t *testing.T) {
+	b := NewParameterStoreBackend().WithAdvanced(true)
+	b.c = new(mockSsmClient)
+
+	t.Run("sanity check", func(t *testing.T) {
+		if b.tier != ssm.ParameterTierAdvanced {
+			t.Fatal("Advanced tier not set")
+		}
+	})
+
+	t.Run("good", func(t *testing.T) {
+		if err := b.Store("key", "secret"); err != nil {
+			t.Error(err)
+			return
+		}
+	})
+}

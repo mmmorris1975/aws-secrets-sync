@@ -66,6 +66,15 @@ describe 'tests using command line args' do
     end
   end
 
+  describe 'for the ssm backend using advanced parameters' do
+    if ENV.fetch("CIRCLECI", false).to_s === "false"; then
+      describe command ('aws-secrets-sync -s ssm -a -k alias/circleci \'{"/circleci/advanced-text": "item"}\'') do
+        its(:exit_status) { should eq 0 }
+        its(:stderr) { should match /INFO updated secret \/circleci\/advanced-text/ }
+      end
+    end
+  end
+
   describe 'for the dynamodb backend' do
     describe command ('aws-secrets-sync -s dynamodb H4sIAG/UnlwAA6tW0k/OLErOSU3O1E+vyixQslJQKkktLlGq5QIATeaDghsAAAA=') do
       its(:exit_status) { should eq 1 }

@@ -35,6 +35,7 @@ var (
 	dynamoTableArg string
 	bucketArg      string
 	kmsKeyArg      string
+	ssmAdvanced    bool
 	oneShotArg     bool
 	verboseArg     bool
 	versionArg     bool
@@ -63,6 +64,8 @@ func init() {
 	flag.StringVar(&kmsKeyArg, "k", os.Getenv("KMS_KEY"),
 		fmt.Sprintf("KMS key ARN, ID, or alias (required for %s and %s backends, optional for %s backend, not used for %s backend)",
 			dynamoSvc, s3Svc, ssmSvc, secretsSvc))
+	flag.BoolVar(&ssmAdvanced, "a", checkBoolEnv("SSM_ADVANCED"),
+		fmt.Sprintf("Create SSM Parameter Store Advanced Parameters, optional for %s backend, ignored by all others", ssmSvc))
 	flag.BoolVar(&oneShotArg, "o", checkBoolEnv("ONE_SHOT"), "run in one-shot mode, providing the key and value to store on the command line")
 	flag.BoolVar(&verboseArg, "v", checkBoolEnv("VERBOSE"), "Print verbose output")
 	flag.BoolVar(&versionArg, "V", false, "Print program version")
@@ -246,7 +249,7 @@ func backendFactory(be string) error {
 	case secretsSvc:
 		sb = NewSecretsManagerBackend()
 	case ssmSvc:
-		sb = NewParameterStoreBackend()
+		sb = NewParameterStoreBackend().WithAdvanced(ssmAdvanced)
 	case s3Svc:
 		if len(bucketArg) < 1 {
 			return fmt.Errorf("missing required bucket name for %s backend", s3Svc)

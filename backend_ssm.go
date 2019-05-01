@@ -11,6 +11,7 @@ import (
 // ParameterStoreBackend is the type for storing a KMS encrypted item attribute in SSM Parameter Store
 type ParameterStoreBackend struct {
 	kmsRequired bool
+	tier        string
 	c           ssmiface.SSMAPI
 }
 
@@ -18,8 +19,17 @@ type ParameterStoreBackend struct {
 func NewParameterStoreBackend() *ParameterStoreBackend {
 	return &ParameterStoreBackend{
 		kmsRequired: false,
+		tier:        ssm.ParameterTierStandard,
 		c:           ssm.New(ses),
 	}
+}
+
+func (b *ParameterStoreBackend) WithAdvanced(a bool) *ParameterStoreBackend {
+	b.tier = ssm.ParameterTierStandard
+	if a {
+		b.tier = ssm.ParameterTierAdvanced
+	}
+	return b
 }
 
 // KmsRequired returns whether or not this backend requires a KMS key to encrypt the value when doing
@@ -39,6 +49,7 @@ func (b *ParameterStoreBackend) Store(key string, value interface{}) error {
 			Name:      aws.String(key),
 			Value:     aws.String(t),
 			Type:      aws.String(ssm.ParameterTypeSecureString),
+			Tier:      aws.String(b.tier),
 			Overwrite: aws.Bool(true),
 		}
 

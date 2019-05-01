@@ -17,8 +17,9 @@ directly.
 Usage
 -----
 ```text
-Usage of aws-secrets-sync:
+Usage of ./aws-secrets-sync:
   -V	Print program version
+  -a	Create SSM Parameter Store Advanced Parameters, optional for ssm backend, ignored by all others
   -b string
     	S3 bucket name, required only for s3 backend, ignored by all others
   -k string
@@ -43,6 +44,7 @@ The tool behavior can also be modified using environment variables detailed in t
 | DYNAMODB_TABLE   | The DynamoDB table name to use for storing the secrets. Equivalent to the `-t` option.
 | S3_BUCKET        | The S3 bucket to use for storing the secrets. Equivalent to the `-b` option. |
 | S3_STORAGE_CLASS | Set the S3 storage class for the secrets, defaults to `STANDARD`.  Refer to the [S3 service documentation](https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html#sc-compare) for valid values. |
+| SSM_ADVANCED     | Use the Advanced Parameter tier with the SSM backend, Equivalent to the `-a` option. |
 
 
 Backends
@@ -53,14 +55,23 @@ This backend will upload the data to the SSM Parameter Store service as Secure S
 the JSON keys.  If the using "pathed" or namespaced key names, AWS expects that the path values are separated by the `/`
 character, and that the parameter name value starts with a `/`
 
+The tool also supports SSM Parameter Store [Advanced Parameters](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-advanced-parameters.html)
+which extends the functionality of standard parameters, at an additional cost.
+
 A KMS key is not required to be supplied when using this backend.  If a key is not provided, the service default key will
 be used to encrypt the value.  The service default KMS key alias is `alias/aws/ssm`.
 
-The maximum size of the secret value is 4096 bytes.
+The maximum size of the secret value is 4096 bytes for standard parameters, and 8192 for advanced parameters.
 
 #### Example
+Standard Parameter
 ```text
 aws-secrets-sync -s ssm '{"/my/secret": "shhhh, this is a secret!"}'
+```
+
+Advanced Parameter
+```text
+aws-secrets-sync -s ssm -a '{"/my/secret": "shhhh, this is a secret!"}'
 ```
 
 #### IAM Permissions Required

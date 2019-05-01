@@ -24,6 +24,8 @@ func NewParameterStoreBackend() *ParameterStoreBackend {
 	}
 }
 
+// WithAdvanced instructs the backend to store the parameters as Advanced Parameters, which allow
+// more parameters in a region, and larger values.
 func (b *ParameterStoreBackend) WithAdvanced(a bool) *ParameterStoreBackend {
 	b.tier = ssm.ParameterTierStandard
 	if a {

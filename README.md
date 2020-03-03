@@ -97,7 +97,7 @@ and the name of the key in the JSON match, in order to update the value.  Since 
 Secret resource, it is not necessary to specify a KMS key when using this tool.  (It will be rightly ignored if you do
 supply one, however)
 
-The maximum size of the secret value is 7168 bytes.
+The maximum size of the secret value is 64k bytes.
 
 #### Example
 ```text

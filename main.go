@@ -15,7 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/ssm"
-	logger "github.com/mmmorris1975/simple-logger"
+	"github.com/mmmorris1975/simple-logger/logger"
 	"io"
 	"os"
 	"sort"
